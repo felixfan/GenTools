@@ -1,12 +1,15 @@
 # vcfFilter - Python tool for handling VCF files.
 
-## Table of Contents 
+Table of Contents
+=================
 
-  [1 Filter by Chromosome](#1 Filter by Chromosome)  
-[1.1 Keep all autosomes](#1.1 Keep all autosomes)   
-[1.2 Keep chromosome 1 and 3](#1.2 Keep chromosome 1 and 3)   
-[1.3 Keep chromosome 1, 2, 3 and 6 ](#1.3 Keep chromosome 1, 2, 3 and 6)   
-[2 Filter by Position](#2 Filter by Position)   
+  * [vcfFilter \- Python tool for handling VCF files\.](#vcffilter---python-tool-for-handling-vcf-files)
+    * [1 Filter by Chromosome](#1-filter-by-chromosome)
+      * [1\.1 Keep all autosomes](#11-keep-all-autosomes)
+      * [1\.2 Keep chromosome 1 and 3](#12-keep-chromosome-1-and-3)
+      * [1\.3 Keep chromosome 1, 2, 3 and 6](#13-keep-chromosome-1-2-3-and-6)
+    * [2 Filter by Position](#2-filter-by-position)
+
 
 ## 1 Filter by Chromosome
 
