@@ -3,11 +3,24 @@
 import argparse
 import time
 
+def split_str_comma(CHR):
+    '''
+    split string with comma
+    return a list of string
+    '''
+    chrs = []
+    if -1 != CHR.find(','):
+        chrs.append(CHR)
+    else:
+        tmp = CHR.split(',')
+        for t in tmp:
+            chrs.append(t)
+    return chrs
 
 def split_str_dash(CHR):
     '''
     split string with dash (-)
-    return a list od string
+    return a list of string
     '''
     chrs = []
     if -1 != CHR.find('-'):
@@ -28,7 +41,7 @@ def split_str_dash(CHR):
 def split_str_comma_dash(CHR):
     '''
     split string with comma (,) and/or dash (-)
-    return a list od string
+    return a list of string
     '''
     chrs = []
     if -1==CHR.find(','):
