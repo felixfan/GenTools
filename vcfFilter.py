@@ -9,7 +9,7 @@ def split_str_comma(CHR):
     return a list of string
     '''
     chrs = []
-    if -1 != CHR.find(','):
+    if -1 == CHR.find(','):
         chrs.append(CHR)
     else:
         tmp = CHR.split(',')
