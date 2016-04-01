@@ -19,3 +19,12 @@ python vcfFilter.py -vcf input.vcf -chr chr1,chr3 -o output.vcf
 ```python
 python vcfFilter.py -vcf input.vcf -chr chr1-chr3,chr6 -o output.vcf
 ```
+
+## 2 Filter by Position
+
+Keep only the first 1 Mb (1-1,000,000) region on chromosome 1:  
+
+```python
+python vcfFilter.py -vcf input.vcf -pos chr1:1-1000000 -o output.vcf
+```
+
