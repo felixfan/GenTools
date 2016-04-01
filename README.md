@@ -3,6 +3,7 @@
 Table of Contents
 =================
 
+  * [vcfFilter \- Python tool for handling VCF files\.](#vcffilter---python-tool-for-handling-vcf-files)
     * [1 Filter by Chromosome](#1-filter-by-chromosome)
       * [1\.1 Keep all autosomes](#11-keep-all-autosomes)
       * [1\.2 Keep chromosome 1 and 3](#12-keep-chromosome-1-and-3)
