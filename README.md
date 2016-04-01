@@ -1,15 +1,17 @@
 # vcfFilter - Python tool for handling VCF files.
 
-## Table of Contents
+Table of Contents
+=================
 
-* [vcfFilter \- Python tool for handling VCF files\.](#vcffilter---python-tool-for-handling-vcf-files)
     * [1 Filter by Chromosome](#1-filter-by-chromosome)
       * [1\.1 Keep all autosomes](#11-keep-all-autosomes)
       * [1\.2 Keep chromosome 1 and 3](#12-keep-chromosome-1-and-3)
       * [1\.3 Keep chromosome 1, 2, 3 and 6](#13-keep-chromosome-1-2-3-and-6)
     * [2 Filter by Position](#2-filter-by-position)
     * [3 Filter by QUAL Score](#3-filter-by-qual-score)
-
+    * [4 Filter by Filter Flag](#4-filter-by-filter-flag)
+      * [4\.1 Keep variants with FILTER flag: "PASS"](#41-keep-variants-with-filter-flag-pass)
+      * [4\.2 Keep variants with FILTER flags (separated by comma)](#42-keep-variants-with-filter-flags-separated-by-comma)
 
 ## 1 Filter by Chromosome
 
@@ -45,4 +47,18 @@ Keep variants with phred-scaled quality score no less than 30:
 
 ```python
 python vcfFilter.py -vcf input.vcf -qual 30 -o output.vcf
+```
+
+## 4 Filter by Filter Flag
+
+### 4.1 Keep variants with FILTER flag: "PASS"
+
+```python
+python vcfFilter.py -vcf input.vcf -filter PASS -o output.vcf
+```
+
+### 4.2 Keep variants with FILTER flags (separated by comma)
+
+```python
+python vcfFilter.py -vcf input.vcf -filter PASS,VQSRTrancheINDEL99.00to99.90,VQSRTrancheINDEL99.90to100.00,VQSRTrancheSNP99.00to99.90,VQSRTrancheSNP99.90to100.00 -o output.vcf
 ```
