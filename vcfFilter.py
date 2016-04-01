@@ -2,13 +2,13 @@
 
 import argparse
 import time
-import sys
 
-'''
-split string with dash (-)
-return a list od string
-'''
-def splitStrDash(CHR):
+
+def split_str_dash(CHR):
+    '''
+    split string with dash (-)
+    return a list od string
+    '''
     chrs = []
     if -1 != CHR.find('-'):
         if -1 == CHR.find('chr') and -1 == CHR.find('CHR'):
@@ -25,30 +25,30 @@ def splitStrDash(CHR):
                 chrs.append(tmp[0][:3]+str(t))
     return chrs
 
-'''
-split string with comma (,) and/or dash (-)
-return a list od string
-'''
-def splitStrCommaDash(CHR):
+def split_str_comma_dash(CHR):
+    '''
+    split string with comma (,) and/or dash (-)
+    return a list od string
+    '''
     chrs = []
     if -1==CHR.find(','):
         if -1 == CHR.find('-'):
            chrs.append(CHR)
         else:
-            chrs.extend(splitStrDash(CHR))
+            chrs.extend(split_str_dash(CHR))
     else:
         tmp = CHR.split(',')
         for it in tmp:
             if -1 == it.find('-'):
                 chrs.append(it)
             else:
-                chrs.extend(splitStrDash(it))
+                chrs.extend(split_str_dash(it))
     return chrs
-
-'''
-filter by chromosome
-'''   
-def chrFilterByChr(infile, chrs,outfile):
+  
+def filter_by_chr(infile, chrs,outfile):
+    '''
+    filter by chromosome
+    ''' 
     fr = open(infile)
     fw = open(outfile, 'w')
     for r in fr:
@@ -98,8 +98,8 @@ print "\t-o", OUTFILE
 print
 #######################################################
 if CHR:
-    chrs = splitStrCommaDash(CHR)
+    chrs = split_str_comma_dash(CHR)
     print "keep chromosomes:", chrs
-    chrFilterByChr(INFILE,chrs, OUTFILE)
+    filter_by_chr(INFILE,chrs, OUTFILE)
 else:
     pass
