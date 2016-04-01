@@ -77,6 +77,22 @@ def filter_by_pos(infile, chr, start, end, outfile):
                 fw.write("%s\n" % r)
     fw.close()
     fr.close()
+def filter_by_qual(infile, cutoff, outfile):
+    '''
+    filter by qual >= cutoff
+    '''
+    fr = open(infile)
+    fw = open(outfile, 'w')
+    for r in fr:
+        r = r.strip()
+        if r.startswith("#"):
+            fw.write("%s\n" % r)
+        else:
+            arr = r.split()
+            if float(arr[5]) >= cutoff:
+                fw.write("%s\n" % r)
+    fw.close()
+    fr.close()
 #######################################################
 strattime = time.time()
 #######################################################
@@ -87,6 +103,7 @@ parser.add_argument('-vcf', '--vcfFile', help='input vcf file', required=True, t
 ### filters
 parser.add_argument('-chr', '--chromosome', help='filter by chromosome', type=str)
 parser.add_argument('-pos', '--position', help='filter by position', type=str)
+parser.add_argument('-qual', '--qual', help='filter by qual score', type=float)
 ###missing value
 parser.add_argument('-mv', '--missingValue', help='how to deal with missing values', default="keep", type=str, choices=["keep", "rm"])
 ### output
@@ -97,6 +114,7 @@ INFILE = args['vcfFile']
 OUTFILE = args['out']
 CHR = args['chromosome'] if 'chromosome' in args else None
 POS = args['position'] if 'position' in args else None
+QUAL = args['qual'] if 'qual' in args else None
 NA = args['missingValue']
 #######################################################
 print "@-------------------------------------------------------------@"
@@ -113,6 +131,8 @@ if CHR:
     print "\t-chr", CHR
 elif POS:
     print "\t-pos", POS
+elif QUAL:
+    print "\t-qual", QUAL
 print "\t-o", OUTFILE
 print
 #######################################################
@@ -127,10 +147,15 @@ elif POS:
     end = int(tmp[1].split('-')[1])
     print "keep region: %s, from %d to %d" % (chr, start, end)
     filter_by_pos(INFILE,chr,start,end,OUTFILE)
+elif QUAL:
+    cutoff = float(QUAL)
+    print "keep variants with qual score no less than %f" % cutoff
+    filter_by_qual(INFILE, cutoff, OUTFILE)
 else:
     pass
 ###############################################################################
 usedtime = time.time() - strattime
+print
 print "Time used:",
 if usedtime >=60:
 	ts = int(usedtime) % 60
