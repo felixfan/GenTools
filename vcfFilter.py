@@ -129,3 +129,22 @@ elif POS:
     filter_by_pos(INFILE,chr,start,end,OUTFILE)
 else:
     pass
+###############################################################################
+usedtime = time.time() - strattime
+print "Time used:",
+if usedtime >=60:
+	ts = int(usedtime) % 60
+	usedtime = int(usedtime) / 60
+	tm = int(usedtime) % 60
+	usedtime = int(usedtime) / 60
+	th = int(usedtime) % 60
+	if th > 0:
+		print "%d hours"  % th,
+		print "%d minutes"  % tm,
+	elif tm > 0:
+		print "%d minutes"  % tm,
+else:
+	ts = usedtime
+print '%.2f seconds' % ts
+print "Finished at ",
+print time.strftime("%H:%M:%S %d %b %Y")
