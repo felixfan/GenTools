@@ -61,6 +61,22 @@ def filter_by_chr(infile, chrs,outfile):
                 fw.write("%s\n" % r)
     fw.close()
     fr.close()
+def filter_by_pos(infile, chr, start, end, outfile):
+    '''
+    filter by postion
+    '''
+    fr = open(infile)
+    fw = open(outfile, 'w')
+    for r in fr:
+        r = r.strip()
+        if r.startswith("#"):
+            fw.write("%s\n" % r)
+        else:
+            arr = r.split()
+            if arr[0] == chr and int(arr[1]) >= start and int(arr[1]) <= end:
+                fw.write("%s\n" % r)
+    fw.close()
+    fr.close()
 #######################################################
 strattime = time.time()
 #######################################################
@@ -70,6 +86,7 @@ parser.add_argument('-v', '--version', action='version', version='%(prog)s 1.0.0
 parser.add_argument('-vcf', '--vcfFile', help='input vcf file', required=True, type=str)
 ### filters
 parser.add_argument('-chr', '--chromosome', help='filter by chromosome', type=str)
+parser.add_argument('-pos', '--position', help='filter by position', type=str)
 ###missing value
 parser.add_argument('-mv', '--missingValue', help='how to deal with missing values', default="keep", type=str, choices=["keep", "rm"])
 ### output
@@ -79,6 +96,7 @@ args = vars(parser.parse_args())
 INFILE = args['vcfFile']
 OUTFILE = args['out']
 CHR = args['chromosome'] if 'chromosome' in args else None
+POS = args['position'] if 'position' in args else None
 NA = args['missingValue']
 #######################################################
 print "@-------------------------------------------------------------@"
@@ -93,7 +111,8 @@ print "\n\tOptions in effect:"
 print "\t-vcf", INFILE
 if CHR:
     print "\t-chr", CHR
-print "\t-mv", NA
+elif POS:
+    print "\t-pos", POS
 print "\t-o", OUTFILE
 print
 #######################################################
@@ -101,5 +120,12 @@ if CHR:
     chrs = split_str_comma_dash(CHR)
     print "keep chromosomes:", chrs
     filter_by_chr(INFILE,chrs, OUTFILE)
+elif POS:
+    tmp = POS.split(':')
+    chr = tmp[0]
+    start = int(tmp[1].split('-')[0])
+    end = int(tmp[1].split('-')[1])
+    print "keep region: %s, from %d to %d" % (chr, start, end)
+    filter_by_pos(INFILE,chr,start,end,OUTFILE)
 else:
     pass
