@@ -74,6 +74,7 @@ def filter_by_chr(infile, chrs,outfile):
                 fw.write("%s\n" % r)
     fw.close()
     fr.close()
+    
 def filter_by_pos(infile, chr, start, end, outfile):
     '''
     filter by postion
@@ -90,6 +91,7 @@ def filter_by_pos(infile, chr, start, end, outfile):
                 fw.write("%s\n" % r)
     fw.close()
     fr.close()
+    
 def filter_by_qual(infile, cutoff, outfile):
     '''
     filter by qual >= cutoff
@@ -106,6 +108,23 @@ def filter_by_qual(infile, cutoff, outfile):
                 fw.write("%s\n" % r)
     fw.close()
     fr.close()
+
+def filter_by_filter(infile, flts, outfile):
+    '''
+    keep variants with FILTER flag: flts
+    '''
+    fr = open(infile)
+    fw = open(outfile, 'w')
+    for r in fr:
+        r = r.strip()
+        if r.startswith("#"):
+            fw.write("%s\n" % r)
+        else:
+            arr = r.split()
+            if arr[6] in flts:
+                fw.write("%s\n" % r)
+    fw.close()
+    fr.close()
 #######################################################
 strattime = time.time()
 #######################################################
@@ -117,6 +136,7 @@ parser.add_argument('-vcf', '--vcfFile', help='input vcf file', required=True, t
 parser.add_argument('-chr', '--chromosome', help='filter by chromosome', type=str)
 parser.add_argument('-pos', '--position', help='filter by position', type=str)
 parser.add_argument('-qual', '--qual', help='filter by qual score', type=float)
+parser.add_argument('-filter', '--filter', help='filter by filter flag', type=str)
 ###missing value
 parser.add_argument('-mv', '--missingValue', help='how to deal with missing values', default="keep", type=str, choices=["keep", "rm"])
 ### output
@@ -128,6 +148,7 @@ OUTFILE = args['out']
 CHR = args['chromosome'] if 'chromosome' in args else None
 POS = args['position'] if 'position' in args else None
 QUAL = args['qual'] if 'qual' in args else None
+FILTER = args['filter'] if 'filter' in args else None
 NA = args['missingValue']
 #######################################################
 print "@-------------------------------------------------------------@"
@@ -146,6 +167,8 @@ elif POS:
     print "\t-pos", POS
 elif QUAL:
     print "\t-qual", QUAL
+elif FILTER:
+    print "\t-filter", FILTER
 print "\t-o", OUTFILE
 print
 #######################################################
@@ -164,6 +187,10 @@ elif QUAL:
     cutoff = float(QUAL)
     print "keep variants with qual score no less than %f" % cutoff
     filter_by_qual(INFILE, cutoff, OUTFILE)
+elif FILTER:
+    flts = split_str_comma(FILTER)
+    print "keep variants with FILTER flag:", flts
+    filter_by_filter(INFILE, flts, OUTFILE)
 else:
     pass
 ###############################################################################
