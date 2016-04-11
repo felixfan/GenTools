@@ -2,6 +2,7 @@
 
 import argparse
 import time
+import sys
 
 def split_str_comma(CHR):
     '''
@@ -125,6 +126,80 @@ def filter_by_filter(infile, flts, outfile):
                 fw.write("%s\n" % r)
     fw.close()
     fr.close()
+    
+def check_allele(alleleStr, gtp, na):
+    if alleleStr.startswith('./.') or alleleStr.startswith('.|.') or alleleStr == ".":  # missing vale
+        if na == "keep":
+            return True
+        else:
+            return False
+    else:
+        s = alleleStr.split(':')[0]
+        if gtp == "hom-ref":
+            if 2 == s.count('0'):
+                return True
+            else:
+                return False
+        elif gtp == "het":
+            if 1 == s.count('0'):
+                return True
+            else:
+                return False
+        elif gtp == "hom-alt":
+            if 0 == s.count('0') and s[0] == s[2]:
+                return True
+            else:
+                return False
+        elif gtp == "not-hom-ref":
+            if s.count('0') < 2:
+                return True
+            else:
+                return False
+        elif gtp == "not-hom-alt":
+            if s.count('0') > 0:
+                return True
+            else:
+                return False
+        elif gtp == "het-alt":
+            if 0 == s.count('0') and s[0] != s[2]:
+                return True
+            else:
+                return False
+        elif gtp == "two-alt":
+            if 0 == s.count('0'):
+                return True
+            else:
+                return False
+        elif gtp == "not-het":
+            if 1 != s.count('0'):
+                return True
+            else:
+                return False
+
+def filter_by_genotype(infile, gtp, inds, na, outfile):
+    '''
+    keep variants using genotype in samples
+    '''
+    fr = open(infile)
+    fw = open(outfile, 'w')
+    for r in fr:
+        r = r.strip()
+        if r.startswith("##"):
+            fw.write("%s\n" % r)
+        elif r.startswith("#"):
+            myind = r.split()
+        else:
+            arr = r.split()
+            flag = True
+            for i in range(9,len(arr)):
+                if myind[i] in inds:
+                    flag = (flag and check_allele(arr[i],gtp,na))
+                if flag == False:
+                    break
+            if flag:
+                fw.write("%s\n" % r)
+    fw.close()
+    fr.close()
 #######################################################
 strattime = time.time()
 #######################################################
@@ -137,6 +212,9 @@ parser.add_argument('-chr', '--chromosome', help='filter by chromosome', type=st
 parser.add_argument('-pos', '--position', help='filter by position', type=str)
 parser.add_argument('-qual', '--qual', help='filter by qual score', type=float)
 parser.add_argument('-filter', '--filter', help='filter by filter flag', type=str)
+parser.add_argument('-gtp', '--genotype', help='filter by genotype', type=str,choices=["hom-ref", "hom-alt","het", "het-alt","not-hom-ref","not-hom-alt","two-alt","not-het"])
+###individual
+parser.add_argument('-ind', '--individual', help='individual id', type=str)
 ###missing value
 parser.add_argument('-mv', '--missingValue', help='how to deal with missing values', default="keep", type=str, choices=["keep", "rm"])
 ### output
@@ -149,10 +227,12 @@ CHR = args['chromosome'] if 'chromosome' in args else None
 POS = args['position'] if 'position' in args else None
 QUAL = args['qual'] if 'qual' in args else None
 FILTER = args['filter'] if 'filter' in args else None
+GENOTYPE = args['genotype'] if 'genotype' in args else None
+IND = args['individual'] if 'individual' in args else None
 NA = args['missingValue']
 #######################################################
 print "@-------------------------------------------------------------@"
-print "|       vcfFilter     |     v1.0.0      |     31 Mar 2016     |"
+print "|       vcfFilter     |     v1.0.0      |    11 April 2016    |"
 print "|-------------------------------------------------------------|"
 print "|  (C) 2015 Felix Yanhui Fan, GNU General Public License, v2  |"
 print "|-------------------------------------------------------------|"
@@ -169,6 +249,13 @@ elif QUAL:
     print "\t-qual", QUAL
 elif FILTER:
     print "\t-filter", FILTER
+elif GENOTYPE:
+    print "\t-gtp", GENOTYPE
+    if IND:
+        print "\t-ind", IND
+    else:
+        sys.exit("Error, argment -ind is missing!")
+    print "\t-mv", NA
 print "\t-o", OUTFILE
 print
 #######################################################
@@ -191,6 +278,23 @@ elif FILTER:
     flts = split_str_comma(FILTER)
     print "keep variants with FILTER flag:", flts
     filter_by_filter(INFILE, flts, OUTFILE)
+elif GENOTYPE:
+    print "genotype filter:"
+    inds = split_str_comma(IND)
+    if GENOTYPE == "hom-ref":
+        print "keep homozygous of reference allele of these individuals:"
+    elif GENOTYPE == "het":
+        print "keep heterozygous of these individuals:"
+    elif GENOTYPE == "hom-alt":
+        print "keep homozygous of alternative allele of these individuals:"
+    elif GENOTYPE == "not-hom-ref":
+        print "keep heterozygous AND homozygous of alternative allele of these individuals:"
+    elif GENOTYPE == "not-hom-alt":
+        print "keep heterozygous AND homozygous of reference allele of these individuals:"
+    elif GENOTYPE == "het-alt":
+        print "keep two different alternative alleles of these individuals:"
+    print inds
+    filter_by_genotype(INFILE, GENOTYPE, inds, NA, OUTFILE)
 else:
     pass
 ###############################################################################
