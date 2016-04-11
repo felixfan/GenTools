@@ -16,7 +16,10 @@ Table of Contents
     * [3\.4 Filter by Filter Flag](#34-filter-by-filter-flag)
       * [3\.4\.1 Keep variants with FILTER flag: "PASS"](#341-keep-variants-with-filter-flag-pass)
       * [3\.4\.2 Keep variants with FILTER flags (separated by ",")](#342-keep-variants-with-filter-flags-separated-by-)
-      
+    * [3\.5 Filter by Genotype fields](#35-filter-by-genotype-fields)
+  * [4 References](#4-references)
+
+
 # 1 Introduction
 
 # 2 Requirement and Installation
@@ -72,3 +75,38 @@ python vcfFilter.py -vcf input.vcf -filter PASS -o output.vcf
 ```python
 python vcfFilter.py -vcf input.vcf -filter PASS,VQSRTrancheINDEL99.00to99.90,VQSRTrancheINDEL99.90to100.00,VQSRTrancheSNP99.00to99.90,VQSRTrancheSNP99.90to100.00 -o output.vcf
 ```
+
+## 3.5 Filter by Genotype fields
+
+Keep homozygous of reference alleles in sample 001 and sample 002:  
+
+```python
+python vcfFilter.py -vcf input.vcf -gtp hom-ref -ind 001,002 -o output.vcf
+```
+
+Values for **-gtp**:
+
+value        | number of zero | A==B   | description 
+-------------|----------------|--------|--------------------------------
+hom-ref      | 2              | yes    | keep homozygous of refernce allele, e.g., 0/0
+hom-alt      | 0              | yes    | keep homozygous of alternative allele, e.g., 1/1
+het          | 1              | no     | keep heterozygous, e.g., 0/1, or 0/2
+het-alt      | 0              | no     | keep individual has two copy of different alternative alleles, e.g., 1/2
+not-hom-ref  | 0 or 1         | yes/no | keep individual does not have two copy of reference allele, e.g., 0/1 or 1/1 or 1/2
+not-hom-alt  | 1 or 2         | yes/no | keep individual does not have two copy of alternative allele, e.g., 0/0, 0/1, 0/2
+two-alt      | 0              | yes/no | keep individual has two copy of alternative allele, e.g., 1/1 or 1/2
+not-het      | 0 or 2         | yes/no | keep individual who is not heterozygous, e.g. 0/0, 1/1, 1/2
+
+The allele values are 0 for the reference allele, 1 for the first allele listed in ALT, 2 for the second allele list in ALT and so on. For diploid calls examples could be 0/1 (A=0 and B=1, number of zero is 1).   
+
+value of **-ind** is a string of individual IDs separated by ",". e.g., "-ind 1", "-ind 1,2,3"
+
+**Note**: individual IDs must be in the header line of the input VCF file.
+
+# 4 References
+
+* [VCF (Variant Call Format) version 4.0](http://www.1000genomes.org/wiki/Analysis/vcf4.0)
+* [VCF (Variant Call Format) version 4.1](http://samtools.github.io/hts-specs/VCFv4.1.pdf)
+* [VCF (Variant Call Format) version 4.2](http://samtools.github.io/hts-specs/VCFv4.2.pdf)
+* [VCF (Variant Call Format) version 4.3](http://samtools.github.io/hts-specs/VCFv4.3.pdf)
+
