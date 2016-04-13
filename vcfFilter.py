@@ -135,47 +135,50 @@ def check_allele(alleleStr, gtp, na):
             return False
     else:
         s = alleleStr.split(':')[0]
-        if gtp == "hom-ref":
-            if 2 == s.count('0'):
-                return True
-            else:
-                return False
-        elif gtp == "het":
-            if 1 == s.count('0'):
-                return True
-            else:
-                return False
-        elif gtp == "hom-alt":
-            if 0 == s.count('0') and s[0] == s[2]:
-                return True
-            else:
-                return False
-        elif gtp == "not-hom-ref":
-            if s.count('0') < 2:
-                return True
-            else:
-                return False
-        elif gtp == "not-hom-alt":
-            if s.count('0') > 0:
-                return True
-            else:
-                return False
-        elif gtp == "het-alt":
-            if 0 == s.count('0') and s[0] != s[2]:
-                return True
-            else:
-                return False
-        elif gtp == "two-alt":
-            if 0 == s.count('0'):
-                return True
-            else:
-                return False
-        elif gtp == "not-het":
-            if 1 != s.count('0'):
-                return True
-            else:
-                return False
-
+        if -1 != s.find('/') or -1 != s.find('|'): # gtp separate with '/' or '|', else return False
+            if gtp == "hom-ref":
+                if 2 == s.count('0'):
+                    return True
+                else:
+                    return False
+            elif gtp == "het":
+                if 1 == s.count('0'):
+                    return True
+                else:
+                    return False
+            elif gtp == "hom-alt":
+                if 0 == s.count('0') and s[0] == s[2]:
+                    return True
+                else:
+                    return False
+            elif gtp == "not-hom-ref":
+                if s.count('0') < 2:
+                    return True
+                else:
+                    return False
+            elif gtp == "not-hom-alt":
+                if s.count('0') > 0:
+                    return True
+                else:
+                    return False
+            elif gtp == "het-alt":
+                if 0 == s.count('0') and s[0] != s[2]:
+                    return True
+                else:
+                    return False
+            elif gtp == "two-alt":
+                if 0 == s.count('0'):
+                    return True
+                else:
+                    return False
+            elif gtp == "not-het":
+                if 1 != s.count('0'):
+                    return True
+                else:
+                    return False
+        else:
+            return False
+                    
 def filter_by_genotype(infile, gtp, inds, na, outfile):
     '''
     keep variants using genotype in samples
