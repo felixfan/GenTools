@@ -187,6 +187,7 @@ def filter_by_genotype(infile, gtp, inds, na, outfile):
         if r.startswith("##"):
             fw.write("%s\n" % r)
         elif r.startswith("#"):
+            fw.write("%s\n" % r)
             myind = r.split()
         else:
             arr = r.split()
