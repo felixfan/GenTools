@@ -87,14 +87,19 @@ def filter_by_pos(infile, chr, start, end, outfile):
     '''
     fr = open(infile)
     fw = open(outfile, 'w')
+    n = 0
+    m = 0
     for r in fr:
         r = r.strip()
         if r.startswith("#"):
             fw.write("%s\n" % r)
         else:
             arr = r.split()
+            n += 1
             if arr[0] == chr and int(arr[1]) >= start and int(arr[1]) <= end:
                 fw.write("%s\n" % r)
+                m += 1
+    print "%d of %d variants were written to %s" % (m, n, outfile)
     fw.close()
     fr.close()
     
@@ -104,14 +109,19 @@ def filter_by_qual(infile, cutoff, outfile):
     '''
     fr = open(infile)
     fw = open(outfile, 'w')
+    n = 0
+    m = 0
     for r in fr:
         r = r.strip()
         if r.startswith("#"):
             fw.write("%s\n" % r)
         else:
             arr = r.split()
+            n += 1
             if float(arr[5]) >= cutoff:
                 fw.write("%s\n" % r)
+                m += 1
+    print "%d of %d variants were written to %s" % (m, n, outfile)
     fw.close()
     fr.close()
 
@@ -121,14 +131,19 @@ def filter_by_filter(infile, flts, outfile):
     '''
     fr = open(infile)
     fw = open(outfile, 'w')
+    n = 0
+    m = 0
     for r in fr:
         r = r.strip()
         if r.startswith("#"):
             fw.write("%s\n" % r)
         else:
             arr = r.split()
+            n += 1
             if arr[6] in flts:
                 fw.write("%s\n" % r)
+                m += 1
+    print "%d of %d variants were written to %s" % (m, n, outfile)
     fw.close()
     fr.close()
     
@@ -190,6 +205,8 @@ def filter_by_genotype(infile, gtp, inds, na, outfile):
     '''
     fr = open(infile)
     fw = open(outfile, 'w')
+    n = 0
+    m = 0
     for r in fr:
         r = r.strip()
         if r.startswith("##"):
@@ -199,6 +216,7 @@ def filter_by_genotype(infile, gtp, inds, na, outfile):
             myind = r.split()
         else:
             arr = r.split()
+            n += 1
             flag = True
             for i in range(9,len(arr)):
                 if myind[i] in inds:
@@ -207,6 +225,8 @@ def filter_by_genotype(infile, gtp, inds, na, outfile):
                     break
             if flag:
                 fw.write("%s\n" % r)
+                m += 1
+    print "%d of %d variants were written to %s" % (m, n, outfile)
     fw.close()
     fr.close()
 #######################################################
