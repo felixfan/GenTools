@@ -176,7 +176,7 @@ def check_allele(alleleStr, gtp, na):
                     return True
                 else:
                     return False
-            elif gtp == "not-hom-alt":
+            elif gtp == "not-two-alt":
                 if s.count('0') > 0:
                     return True
                 else:
@@ -241,7 +241,7 @@ parser.add_argument('-chr', '--chromosome', help='filter by chromosome', type=st
 parser.add_argument('-pos', '--position', help='filter by position', type=str)
 parser.add_argument('-qual', '--qual', help='filter by qual score', type=float)
 parser.add_argument('-filter', '--filter', help='filter by filter flag', type=str)
-parser.add_argument('-gtp', '--genotype', help='filter by genotype', type=str,choices=["hom-ref", "hom-alt","het", "het-alt","not-hom-ref","not-hom-alt","two-alt","not-het"])
+parser.add_argument('-gtp', '--genotype', help='filter by genotype', type=str,choices=["hom-ref", "hom-alt","het", "het-alt","not-hom-ref","not-two-alt","two-alt","not-het"])
 ###individual
 parser.add_argument('-ind', '--individual', help='individual id', type=str)
 ###missing value
@@ -318,7 +318,7 @@ elif GENOTYPE:
         print "keep homozygous of alternative allele of these individuals:"
     elif GENOTYPE == "not-hom-ref":
         print "keep heterozygous AND homozygous of alternative allele of these individuals:"
-    elif GENOTYPE == "not-hom-alt":
+    elif GENOTYPE == "not-two-alt":
         print "keep heterozygous AND homozygous of reference allele of these individuals:"
     elif GENOTYPE == "het-alt":
         print "keep two different alternative alleles of these individuals:"
