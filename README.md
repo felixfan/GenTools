@@ -19,6 +19,7 @@ Table of Contents
     * [3\.5 Filter by Genotype fields](#35-filter-by-genotype-fields)
   * [4 References](#4-references)
 
+
 # 1 Introduction
 
 # 2 Requirement and Installation
@@ -87,7 +88,6 @@ Values for **-gtp**:
 
 value        | number of zero | A==B   | description 
 -------------|----------------|--------|--------------------------------
-<<<<<<< HEAD
 hom-ref      | 2              | yes    | keep homozygous of refernce allele, two ref, e.g., 0/0
 hom-alt      | 0              | yes    | keep homozygous of alternative allele, two same alt e.g., 1/1
 het          | 1              | no     | keep heterozygous, one ref and one alt e.g., 0/1, or 0/2
@@ -96,16 +96,6 @@ not-hom-ref  | 0 or 1         | yes/no | keep individual does not have two copy 
 not-two-alt  | 1 or 2         | yes/no | keep individual does not have two copy of alternative allele, at least one ref, e.g., 0/0, 0/1, 0/2
 two-alt      | 0              | yes/no | keep individual has two copy of alternative allele, two same or different alt, e.g., 1/1 or 1/2
 not-het      | 0 or 2         | yes/no | keep individual who is not heterozygous, hom-ref or two-alt, e.g. 0/0, 1/1, 1/2
-=======
-hom-ref      | 2              | yes    | keep homozygous of refernce allele, e.g., 0/0
-hom-alt      | 0              | yes    | keep homozygous of alternative allele, e.g., 1/1
-het          | 1              | no     | keep heterozygous, e.g., 0/1, or 0/2
-het-alt      | 0              | no     | keep individual has two copy of different alternative alleles, e.g., 1/2
-not-hom-ref  | 0 or 1         | yes/no | keep individual does not have two copy of reference allele, e.g., 0/1 or 1/1 or 1/2
-not-two-alt  | 1 or 2         | yes/no | keep individual does not have two copy of alternative allele, e.g., 0/0, 0/1, 0/2
-two-alt      | 0              | yes/no | keep individual has two copy of alternative allele, e.g., 1/1 or 1/2
-not-het      | 0 or 2         | yes/no | keep individual who is not heterozygous, e.g. 0/0, 1/1, 1/2
->>>>>>> origin/master
 
 The allele values are 0 for the reference allele, 1 for the first allele listed in ALT, 2 for the second allele list in ALT and so on. For diploid calls examples could be 0/1 (A=0 and B=1, number of zero is 1).   
 
