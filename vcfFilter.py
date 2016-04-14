@@ -65,14 +65,19 @@ def filter_by_chr(infile, chrs,outfile):
     ''' 
     fr = open(infile)
     fw = open(outfile, 'w')
+    n = 0
+    m = 0
     for r in fr:
         r = r.strip()
         if r.startswith("#"):
             fw.write("%s\n" % r)
         else:
             arr = r.split()
+            n += 1
             if arr[0] in chrs:
                 fw.write("%s\n" % r)
+                m += 1
+    print "%d of %d variants were written to %s" % (m, n, outfile)
     fw.close()
     fr.close()
     
