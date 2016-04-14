@@ -93,7 +93,7 @@ hom-alt      | 0              | yes    | keep homozygous of alternative allele, 
 het          | 1              | no     | keep heterozygous, e.g., 0/1, or 0/2
 het-alt      | 0              | no     | keep individual has two copy of different alternative alleles, e.g., 1/2
 not-hom-ref  | 0 or 1         | yes/no | keep individual does not have two copy of reference allele, e.g., 0/1 or 1/1 or 1/2
-not-hom-alt  | 1 or 2         | yes/no | keep individual does not have two copy of alternative allele, e.g., 0/0, 0/1, 0/2
+not-two-alt  | 1 or 2         | yes/no | keep individual does not have two copy of alternative allele, e.g., 0/0, 0/1, 0/2
 two-alt      | 0              | yes/no | keep individual has two copy of alternative allele, e.g., 1/1 or 1/2
 not-het      | 0 or 2         | yes/no | keep individual who is not heterozygous, e.g. 0/0, 1/1, 1/2
 
