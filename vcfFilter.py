@@ -235,7 +235,7 @@ strattime = time.time()
 parser = argparse.ArgumentParser(description='VCF Filter', prog="vcfFilter.py")
 parser.add_argument('-v', '--version', action='version', version='%(prog)s 1.0.0')
 ### input
-parser.add_argument('-vcf', '--vcfFile', help='input vcf file', required=True, type=str)
+parser.add_argument('-vcf', '--vcf', help='input vcf file', required=True, type=str)
 ### filters
 parser.add_argument('-chr', '--chromosome', help='filter by chromosome', type=str)
 parser.add_argument('-pos', '--position', help='filter by position', type=str)
@@ -245,12 +245,12 @@ parser.add_argument('-gtp', '--genotype', help='filter by genotype', type=str,ch
 ###individual
 parser.add_argument('-ind', '--individual', help='individual id', type=str)
 ###missing value
-parser.add_argument('-mv', '--missingValue', help='how to deal with missing values', default="keep", type=str, choices=["keep", "rm"])
+parser.add_argument('-mv', '--missingvalue', help='how to deal with missing values', default="keep", type=str, choices=["keep", "rm"])
 ### output
 parser.add_argument('-o', '--out', help='output vcf file', default='output.vcf')
 #######################################################
 args = vars(parser.parse_args())
-INFILE = args['vcfFile']
+INFILE = args['vcf']
 OUTFILE = args['out']
 CHR = args['chromosome'] if 'chromosome' in args else None
 POS = args['position'] if 'position' in args else None
@@ -258,10 +258,10 @@ QUAL = args['qual'] if 'qual' in args else None
 FILTER = args['filter'] if 'filter' in args else None
 GENOTYPE = args['genotype'] if 'genotype' in args else None
 IND = args['individual'] if 'individual' in args else None
-NA = args['missingValue']
+NA = args['missingvalue']
 #######################################################
 print "@-------------------------------------------------------------@"
-print "|       vcfFilter     |     v1.0.0      |    11 April 2016    |"
+print "|       vcfFilter     |     v1.0.0      |    14 April 2016    |"
 print "|-------------------------------------------------------------|"
 print "|  (C) 2015 Felix Yanhui Fan, GNU General Public License, v2  |"
 print "|-------------------------------------------------------------|"
