@@ -17,6 +17,9 @@ Table of Contents
       * [3\.4\.1 Keep variants with FILTER flag: "PASS"](#341-keep-variants-with-filter-flag-pass)
       * [3\.4\.2 Keep variants with FILTER flags (separated by ",")](#342-keep-variants-with-filter-flags-separated-by-)
     * [3\.5 Filter by Genotype fields](#35-filter-by-genotype-fields)
+    * [3\.6 Filter Indels](#36-filter-indels)
+      * [3\.6\.1 keep only sites that contain an indel](#361-keep-only-sites-that-contain-an-indel)
+      * [3\.6\.2 exclude sites that contain an indel](#362-exclude-sites-that-contain-an-indel)
   * [4 References](#4-references)
 
 
@@ -102,6 +105,30 @@ The allele values are 0 for the reference allele, 1 for the first allele listed 
 value of **-ind** is a string of individual IDs separated by ",". e.g., "-ind 1", "-ind 1,2,3"
 
 **Note**: individual IDs must be in the header line of the input VCF file.
+
+## 3.6 Filter Indels
+
+If one site only has one ALT allele, "indel" here means that the length of REF and ALT allele is different. If one site has multiple ALT alleles, "indel" here means that at least one ALT allele has different length from REF allele. Site 1 and 2 will be defined as "indel" in the forllowing four sites.
+
+```
+site   REF                ALT
+1      TTTTA              T,TTTTATTTA
+2      A                  ATGTG,G,ATG
+3      G                  C,T
+4      T                  G
+```
+
+### 3.6.1 keep only sites that contain an indel
+
+```python
+python vcfFilter.py -vcf input.vcf --keep-only-indels -o output.vcf
+```
+
+### 3.6.2 exclude sites that contain an indel
+
+```python
+python vcfFilter.py -vcf input.vcf --remove-indels -o output.vcf
+```
 
 # 4 References
 
