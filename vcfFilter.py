@@ -292,8 +292,7 @@ def filter_by_ids(infile, ids, outfile):
         else:
             arr = r.split()
             n += 1
-            tmpl = filter(lambda x: arr[2]==x, ids)
-            if len(tmpl) > 0:
+            if arr[2] in ids:
                 fw.write("%s\n" % r)
                 m += 1 # do NOT rm ID that already print out, since there are more variant's ID were '.'
     print "%d of %d variants were written to %s" % (m, n, outfile)
@@ -315,8 +314,7 @@ def filter_by_phypos(infile, pp, outfile):
             arr = r.split()
             n += 1
             tmp = arr[0] + ":" + arr[1]
-            tmpl = filter(lambda x: x == tmp, pp)
-            if len(tmpl)>0:
+            if tmp in pp:
                 fw.write("%s\n" % r)
                 m += 1
                 pp.remove(tmp) # rm variants that already print out
