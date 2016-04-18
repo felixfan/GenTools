@@ -20,8 +20,13 @@ Table of Contents
     * [3\.6 Filter Indels](#36-filter-indels)
       * [3\.6\.1 keep only sites that contain an indel](#361-keep-only-sites-that-contain-an-indel)
       * [3\.6\.2 exclude sites that contain an indel](#362-exclude-sites-that-contain-an-indel)
+    * [3\.7 Filter by ID](#37-filter-by-id)
+      * [3\.7\.1 IDs were seperated by ','](#371-ids-were-seperated-by-)
+      * [3\.7\.2 IDs were stored in a file](#372-ids-were-stored-in-a-file)
+    * [3\.8 Filter by Physical Positions](#38-filter-by-physical-positions)
+      * [3\.8\.1 Physical positions were seperated by ','](#381-physical-positions-were-seperated-by-)
+      * [3\.8\.2 IDs were stored in a file](#382-ids-were-stored-in-a-file)
   * [4 References](#4-references)
-
 
 # 1 Introduction
 
@@ -128,6 +133,64 @@ python vcfFilter.py -vcf input.vcf --keep-only-indels -o output.vcf
 
 ```python
 python vcfFilter.py -vcf input.vcf --remove-indels -o output.vcf
+```
+
+## 3.7 Filter by ID
+
+### 3.7.1 IDs were seperated by ','
+
+Multiple IDs (e.g. dbSNP rsID) can be seperated using ",". 
+
+**Note:** "," is needed even for only one variant.
+
+```python
+python vcfFilter.py -vcf input.vcf -ids rs1234,rs1235 -o output.vcf
+```
+
+```python
+python vcfFilter.py -vcf input.vcf -ids rs1234, -o output.vcf
+```
+
+### 3.7.2 IDs were stored in a file
+
+Each row contains one ID. e.g.:
+
+```
+rs1234
+rs1235
+```
+
+```python
+python vcfFilter.py -vcf input.vcf -ids ids.txt -o output.vcf
+```
+
+## 3.8 Filter by Physical Positions
+
+### 3.8.1 Physical positions were seperated by ','
+
+Physical positions can be seperated using ",". Each physical position includes chromosome and position that was seperated by ":".
+
+**Note:** "," is needed even for only one variant.
+
+```python
+python vcfFilter.py -vcf input.vcf -phypos chr1:1234567,chr2:9887234 -o output.vcf
+```
+
+```python
+python vcfFilter.py -vcf input.vcf -phypos chr1:1234567, -o output.vcf
+```
+
+### 3.8.2 IDs were stored in a file
+
+Each row contains two columns, the first column is chromosome and the second column is position. e.g.:
+
+```
+chr1  1234567
+chr2  9887234
+```
+
+```python
+python vcfFilter.py -vcf input.vcf -phypos phypos.txt -o output.vcf
 ```
 
 # 4 References
