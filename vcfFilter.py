@@ -277,6 +277,27 @@ def filter_indels(infile, b, outfile):
     print "%d of %d variants were written to %s" % (m, n, outfile)
     fw.close()
     fr.close()
+def filter_by_ids(infile, ids, outfile):
+    '''
+    keep variants in ids
+    '''
+    fr = open(infile)
+    fw = open(outfile, 'w')
+    n = 0
+    m = 0
+    for r in fr:
+        r = r.strip()
+        if r.startswith("#"):
+            fw.write("%s\n" % r)
+        else:
+            arr = r.split()
+            n += 1
+            if arr[2] in ids:
+                fw.write("%s\n" % r)
+                m += 1
+    print "%d of %d variants were written to %s" % (m, n, outfile)
+    fw.close()
+    fr.close()
 #######################################################
 strattime = time.time()
 #######################################################
@@ -292,6 +313,7 @@ parser.add_argument('-filter', '--filter', help='filter by filter flag', type=st
 parser.add_argument('-gtp', '--genotype', help='filter by genotype', type=str,choices=["hom-ref", "hom-alt","het", "het-alt","not-hom-ref","not-two-alt","two-alt","not-het"])
 parser.add_argument('-indel', '--keep-only-indels', help='keep only indels', action='store_true')
 parser.add_argument('-snp', '--remove-indels', help='remove indels', action='store_true')
+parser.add_argument('-ids', '--ids', help='filter by ID', type=str)
 ###individual
 parser.add_argument('-ind', '--individual', help='individual id', type=str)
 ###missing value
@@ -311,9 +333,10 @@ IND = args['individual'] if 'individual' in args else None
 NA = args['missingvalue']
 INDEL = args['keep_only_indels'] if 'keep_only_indels' in args else False
 SNP = args['remove_indels'] if 'remove_indels' in args else False
+IDS = args['ids'] if 'ids' in args else None
 #######################################################
 print "@-------------------------------------------------------------@"
-print "|       vcfFilter     |     v1.0.0      |    14 April 2016    |"
+print "|       vcfFilter     |     v1.0.0      |    18 April 2016    |"
 print "|-------------------------------------------------------------|"
 print "|  (C) 2015 Felix Yanhui Fan, GNU General Public License, v2  |"
 print "|-------------------------------------------------------------|"
@@ -340,7 +363,9 @@ elif GENOTYPE:
 elif INDEL:
     print "\t-indel"
 elif SNP:
-    print "\t-snp"       
+    print "\t-snp" 
+elif IDS:
+    print "\t-ids"
 print "\t-o", OUTFILE
 print
 #######################################################
@@ -387,6 +412,19 @@ elif INDEL:
 elif SNP:
     print "remove indels"
     filter_indels(INFILE, SNP, OUTFILE)
+elif IDS:
+    print "keep variants by ID"
+    print IDS
+    ids = []
+    if -1 == IDS.find(','):
+        tf = open(IDS)
+        for r in tf:
+            r = r.strip()
+            ids.append(r)
+        tf.close       
+    else:
+        ids = IDS.split(',')
+    filter_by_ids(INFILE, ids, OUTFILE)
 else:
     pass
 ###############################################################################
