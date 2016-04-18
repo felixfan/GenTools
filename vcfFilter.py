@@ -292,9 +292,34 @@ def filter_by_ids(infile, ids, outfile):
         else:
             arr = r.split()
             n += 1
-            if arr[2] in ids:
+            tmpl = filter(lambda x: arr[2]==x, ids)
+            if len(tmpl) > 0:
+                fw.write("%s\n" % r)
+                m += 1 # do NOT rm ID that already print out, since there are more variant's ID were '.'
+    print "%d of %d variants were written to %s" % (m, n, outfile)
+    fw.close()
+    fr.close()
+def filter_by_phypos(infile, pp, outfile):
+    '''
+    keep variants by physical positions
+    '''
+    fr = open(infile)
+    fw = open(outfile, 'w')
+    n = 0
+    m = 0
+    for r in fr:
+        r = r.strip()
+        if r.startswith("#"):
+            fw.write("%s\n" % r)
+        else:
+            arr = r.split()
+            n += 1
+            tmp = arr[0] + ":" + arr[1]
+            tmpl = filter(lambda x: x == tmp, pp)
+            if len(tmpl)>0:
                 fw.write("%s\n" % r)
                 m += 1
+                pp.remove(tmp) # rm variants that already print out
     print "%d of %d variants were written to %s" % (m, n, outfile)
     fw.close()
     fr.close()
@@ -314,6 +339,7 @@ parser.add_argument('-gtp', '--genotype', help='filter by genotype', type=str,ch
 parser.add_argument('-indel', '--keep-only-indels', help='keep only indels', action='store_true')
 parser.add_argument('-snp', '--remove-indels', help='remove indels', action='store_true')
 parser.add_argument('-ids', '--ids', help='filter by ID', type=str)
+parser.add_argument('-phypos', '--physicalpostion', help='filter by physical position', type=str)
 ###individual
 parser.add_argument('-ind', '--individual', help='individual id', type=str)
 ###missing value
@@ -334,6 +360,7 @@ NA = args['missingvalue']
 INDEL = args['keep_only_indels'] if 'keep_only_indels' in args else False
 SNP = args['remove_indels'] if 'remove_indels' in args else False
 IDS = args['ids'] if 'ids' in args else None
+PHYPOS = args['physicalpostion'] if 'physicalpostion' in args else None
 #######################################################
 print "@-------------------------------------------------------------@"
 print "|       vcfFilter     |     v1.0.0      |    18 April 2016    |"
@@ -365,7 +392,9 @@ elif INDEL:
 elif SNP:
     print "\t-snp" 
 elif IDS:
-    print "\t-ids"
+    print "\t-ids", IDS
+elif PHYPOS:
+    print "\t-phypos", PHYPOS  
 print "\t-o", OUTFILE
 print
 #######################################################
@@ -414,7 +443,6 @@ elif SNP:
     filter_indels(INFILE, SNP, OUTFILE)
 elif IDS:
     print "keep variants by ID"
-    print IDS
     ids = []
     if -1 == IDS.find(','):
         tf = open(IDS)
@@ -425,6 +453,19 @@ elif IDS:
     else:
         ids = IDS.split(',')
     filter_by_ids(INFILE, ids, OUTFILE)
+elif PHYPOS:
+    print "keep variants by physical position"
+    pp = []
+    if -1 == PHYPOS.find(','):
+        tf = open(PHYPOS)
+        for r in tf:
+            r = r.strip()
+            arr = r.split()
+            pp.append(arr[0]+":"+arr[1])
+        tf.close       
+    else:
+        pp = PHYPOS.split(',')
+    filter_by_phypos(INFILE, pp, OUTFILE)
 else:
     pass
 ###############################################################################
