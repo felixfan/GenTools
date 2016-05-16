@@ -3,7 +3,6 @@
 Table of Contents
 =================
 
-  * [vcfFilter \- Python tool for handling VCF files\.](#vcffilter---python-tool-for-handling-vcf-files)
   * [1 Introduction](#1-introduction)
   * [2 Requirement and Installation](#2-requirement-and-installation)
   * [3 Usage](#3-usage)
@@ -11,7 +10,7 @@ Table of Contents
       * [3\.1\.1 Keep all autosomes (separated by "\-")](#311-keep-all-autosomes-separated-by--)
       * [3\.1\.2 Keep chromosomes (separated by ",")](#312-keep-chromosomes-separated-by-)
       * [3\.1\.3 Keep chromosomes (separated by "," and "\-")](#313-keep-chromosomes-separated-by--and--)
-    * [3\.2 Filter by Position](#32-filter-by-position)
+    * [3\.2 Filter by Region](#32-filter-by-region)
     * [3\.3 Filter by QUAL Score](#33-filter-by-qual-score)
     * [3\.4 Filter by Filter Flag](#34-filter-by-filter-flag)
       * [3\.4\.1 Keep variants with FILTER flag: "PASS"](#341-keep-variants-with-filter-flag-pass)
@@ -25,8 +24,9 @@ Table of Contents
       * [3\.7\.2 IDs were stored in a file](#372-ids-were-stored-in-a-file)
     * [3\.8 Filter by Physical Positions](#38-filter-by-physical-positions)
       * [3\.8\.1 Physical positions were seperated by ','](#381-physical-positions-were-seperated-by-)
-      * [3\.8\.2 IDs were stored in a file](#382-ids-were-stored-in-a-file)
+      * [3\.8\.2 Physical Positions were stored in a file](#382-physical-positions-were-stored-in-a-file)
   * [4 References](#4-references)
+
 
 # 1 Introduction
 
@@ -39,27 +39,27 @@ Table of Contents
 ### 3.1.1 Keep all autosomes (separated by "-")
 
 ```python
-python vcfFilter.py -vcf input.vcf -chr chr1-chr22 -o output.vcf
+python vcfFilter.py -vcf input.vcf -chr chr1-chr22 -out output.vcf
 ```
 
 ### 3.1.2 Keep chromosomes (separated by ",")
 
 ```python
-python vcfFilter.py -vcf input.vcf -chr chr1,chr3 -o output.vcf
+python vcfFilter.py -vcf input.vcf -chr chr1,chr3 -out output.vcf
 ```
 
 ### 3.1.3 Keep chromosomes (separated by "," and "-")
 
 ```python
-python vcfFilter.py -vcf input.vcf -chr chr1-chr3,chr6 -o output.vcf
+python vcfFilter.py -vcf input.vcf -chr chr1-chr3,chr6 -out output.vcf
 ```
 
-## 3.2 Filter by Position
+## 3.2 Filter by Region
 
 Keep only the first 1 Mb (1-1,000,000) region on chromosome 1:  
 
 ```python
-python vcfFilter.py -vcf input.vcf -pos chr1:1-1000000 -o output.vcf
+python vcfFilter.py -vcf input.vcf -region chr1:1-1000000 -out output.vcf
 ```
 
 ## 3.3 Filter by QUAL Score
@@ -67,7 +67,7 @@ python vcfFilter.py -vcf input.vcf -pos chr1:1-1000000 -o output.vcf
 Keep variants with phred-scaled quality score no less than 30:  
 
 ```python
-python vcfFilter.py -vcf input.vcf -qual 30 -o output.vcf
+python vcfFilter.py -vcf input.vcf -qual 30 -out output.vcf
 ```
 
 ## 3.4 Filter by Filter Flag
@@ -75,13 +75,15 @@ python vcfFilter.py -vcf input.vcf -qual 30 -o output.vcf
 ### 3.4.1 Keep variants with FILTER flag: "PASS"
 
 ```python
-python vcfFilter.py -vcf input.vcf -filter PASS -o output.vcf
+python vcfFilter.py -vcf input.vcf -filter PASS -out output.vcf
 ```
 
 ### 3.4.2 Keep variants with FILTER flags (separated by ",")
 
 ```python
-python vcfFilter.py -vcf input.vcf -filter PASS,VQSRTrancheINDEL99.00to99.90,VQSRTrancheINDEL99.90to100.00,VQSRTrancheSNP99.00to99.90,VQSRTrancheSNP99.90to100.00 -o output.vcf
+python vcfFilter.py -vcf input.vcf -filter PASS,VQSRTrancheINDEL99.00to99.90,
+VQSRTrancheINDEL99.90to100.00,VQSRTrancheSNP99.00to99.90,
+VQSRTrancheSNP99.90to100.00 -out output.vcf
 ```
 
 ## 3.5 Filter by Genotype fields
@@ -89,10 +91,10 @@ python vcfFilter.py -vcf input.vcf -filter PASS,VQSRTrancheINDEL99.00to99.90,VQS
 Keep homozygous of reference alleles in sample 001 and sample 002:  
 
 ```python
-python vcfFilter.py -vcf input.vcf -gtp hom-ref -ind 001,002 -o output.vcf
+python vcfFilter.py -vcf input.vcf -genotype hom-ref -ind 001,002 -out output.vcf
 ```
 
-Values for **-gtp**:
+Values for **-genotype**:
 
 value        | number of zero | A==B   | description 
 -------------|----------------|--------|--------------------------------
@@ -126,13 +128,13 @@ site   REF                ALT
 ### 3.6.1 keep only sites that contain an indel
 
 ```python
-python vcfFilter.py -vcf input.vcf --keep-only-indels -o output.vcf
+python vcfFilter.py -vcf input.vcf --keep-only-indels -out output.vcf
 ```
 
 ### 3.6.2 exclude sites that contain an indel
 
 ```python
-python vcfFilter.py -vcf input.vcf --remove-indels -o output.vcf
+python vcfFilter.py -vcf input.vcf --remove-indels -out output.vcf
 ```
 
 ## 3.7 Filter by ID
@@ -141,14 +143,12 @@ python vcfFilter.py -vcf input.vcf --remove-indels -o output.vcf
 
 Multiple IDs (e.g. dbSNP rsID) can be seperated using ",". 
 
-**Note:** "," is needed even for only one variant.
-
 ```python
-python vcfFilter.py -vcf input.vcf -ids rs1234,rs1235 -o output.vcf
+python vcfFilter.py -vcf input.vcf -ids rs1234 -out output.vcf
 ```
 
 ```python
-python vcfFilter.py -vcf input.vcf -ids rs1234, -o output.vcf
+python vcfFilter.py -vcf input.vcf -ids rs1234,rs1235 -out output.vcf
 ```
 
 ### 3.7.2 IDs were stored in a file
@@ -161,7 +161,7 @@ rs1235
 ```
 
 ```python
-python vcfFilter.py -vcf input.vcf -ids ids.txt -o output.vcf
+python vcfFilter.py -vcf input.vcf --ids-file ids.txt -out output.vcf
 ```
 
 ## 3.8 Filter by Physical Positions
@@ -170,17 +170,15 @@ python vcfFilter.py -vcf input.vcf -ids ids.txt -o output.vcf
 
 Physical positions can be seperated using ",". Each physical position includes chromosome and position that was seperated by ":".
 
-**Note:** "," is needed even for only one variant.
-
 ```python
-python vcfFilter.py -vcf input.vcf -phypos chr1:1234567,chr2:9887234 -o output.vcf
+python vcfFilter.py -vcf input.vcf --phy-pos chr1:1234567, -out output.vcf
 ```
 
 ```python
-python vcfFilter.py -vcf input.vcf -phypos chr1:1234567, -o output.vcf
+python vcfFilter.py -vcf input.vcf --phy-pos chr1:1234567,chr2:9887234 -out output.vcf
 ```
 
-### 3.8.2 IDs were stored in a file
+### 3.8.2 Physical Positions were stored in a file
 
 Each row contains two columns, the first column is chromosome and the second column is position. e.g.:
 
@@ -190,7 +188,7 @@ chr2  9887234
 ```
 
 ```python
-python vcfFilter.py -vcf input.vcf -phypos phypos.txt -o output.vcf
+python vcfFilter.py -vcf input.vcf --phy-pos-file phypos.txt -out output.vcf
 ```
 
 # 4 References
