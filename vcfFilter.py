@@ -81,9 +81,9 @@ def filter_by_chr(infile, chrs,outfile):
     fw.close()
     fr.close()
     
-def filter_by_pos(infile, chr, start, end, outfile):
+def filter_by_region(infile, chr, start, end, outfile):
     '''
-    filter by postion
+    filter by region
     '''
     fr = open(infile)
     fw = open(outfile, 'w')
@@ -277,7 +277,7 @@ def filter_indels(infile, b, outfile):
     print "%d of %d variants were written to %s" % (m, n, outfile)
     fw.close()
     fr.close()
-def filter_by_ids(infile, ids, outfile):
+def filter_by_var_ids(infile, ids, outfile):
     '''
     keep variants in ids
     '''
@@ -324,44 +324,51 @@ def filter_by_phypos(infile, pp, outfile):
 #######################################################
 strattime = time.time()
 #######################################################
-parser = argparse.ArgumentParser(description='VCF Filter', prog="vcfFilter.py")
-parser.add_argument('-v', '--version', action='version', version='%(prog)s 1.0.0')
+desc = '''Filtering of polymorphisms according to genotypes, physical positions 
+					and thresholds of quality score, read depth and others.'''
+
+parser = argparse.ArgumentParser(description=desc)
+parser.add_argument('-v', action='version', version='%(prog)s 1.0.0')
 ### input
-parser.add_argument('-vcf', '--vcf', help='input vcf file', required=True, type=str)
+parser.add_argument('-vcf', help='input vcf file', required=True, type=str)
 ### filters
-parser.add_argument('-chr', '--chromosome', help='filter by chromosome', type=str)
-parser.add_argument('-pos', '--position', help='filter by position', type=str)
-parser.add_argument('-qual', '--qual', help='filter by qual score', type=float)
-parser.add_argument('-filter', '--filter', help='filter by filter flag', type=str)
-parser.add_argument('-gtp', '--genotype', help='filter by genotype', type=str,choices=["hom-ref", "hom-alt","het", "het-alt","not-hom-ref","not-two-alt","two-alt","not-het"])
-parser.add_argument('-indel', '--keep-only-indels', help='keep only indels', action='store_true')
-parser.add_argument('-snp', '--remove-indels', help='remove indels', action='store_true')
-parser.add_argument('-ids', '--ids', help='filter by ID', type=str)
-parser.add_argument('-phypos', '--physicalpostion', help='filter by physical position', type=str)
+parser.add_argument('-chr', help='filter by chromosome', type=str)
+parser.add_argument('-region', help='filter by region', type=str)
+parser.add_argument('-qual', help='filter by qual score', type=float)
+parser.add_argument('-filter', help='filter by filter flag', type=str)
+parser.add_argument('-genotype', help='filter by genotype', type=str,choices=["hom-ref", "hom-alt","het", "het-alt","not-hom-ref","not-two-alt","two-alt","not-het"])
+parser.add_argument('--keep-only-indels', help='keep only indels', action='store_true')
+parser.add_argument('--remove-indels', help='remove indels', action='store_true')
+parser.add_argument('-ids', help='filter by ID', type=str)
+parser.add_argument('--ids-file', help='filter by ID', type=str)
+parser.add_argument('--phy-pos', help='filter by physical position', type=str)
+parser.add_argument('--phy-pos-file', help='filter by physical position', type=str)
 ###individual
-parser.add_argument('-ind', '--individual', help='individual id', type=str)
+parser.add_argument('-ind', help='individual id', type=str)
 ###missing value
-parser.add_argument('-mv', '--missingvalue', help='how to deal with missing values', default="keep", type=str, choices=["keep", "rm"])
+parser.add_argument('--missing-value', help='how to deal with missing values', default="keep", type=str, choices=["keep", "rm"])
 ### output
-parser.add_argument('-o', '--out', help='output vcf file', default='output.vcf')
+parser.add_argument('-out', help='output vcf file', type=str, default='output.vcf')
 #######################################################
 args = vars(parser.parse_args())
 INFILE = args['vcf']
 OUTFILE = args['out']
-CHR = args['chromosome'] if 'chromosome' in args else None
-POS = args['position'] if 'position' in args else None
+CHR = args['chr'] if 'chr' in args else None
+REGION = args['region'] if 'region' in args else None
 QUAL = args['qual'] if 'qual' in args else None
 FILTER = args['filter'] if 'filter' in args else None
 GENOTYPE = args['genotype'] if 'genotype' in args else None
-IND = args['individual'] if 'individual' in args else None
-NA = args['missingvalue']
+IND = args['ind'] if 'ind' in args else None
+NA = args['missing_value']
 INDEL = args['keep_only_indels'] if 'keep_only_indels' in args else False
 SNP = args['remove_indels'] if 'remove_indels' in args else False
 IDS = args['ids'] if 'ids' in args else None
-PHYPOS = args['physicalpostion'] if 'physicalpostion' in args else None
+IDSFILE = args['ids_file'] if 'ids_file' in args else None
+PHYPOS = args['phy_pos'] if 'phy_pos' in args else None
+PHYPOSFILE = args['phy_pos_file'] if 'phy_pos_file' in args else None
 #######################################################
 print "@-------------------------------------------------------------@"
-print "|       vcfFilter     |     v1.0.0      |    18 April 2016    |"
+print "|       vcfFilter     |     v1.0.0      |    16 May 2016      |"
 print "|-------------------------------------------------------------|"
 print "|  (C) 2015 Felix Yanhui Fan, GNU General Public License, v2  |"
 print "|-------------------------------------------------------------|"
@@ -372,41 +379,45 @@ print "\n\tOptions in effect:"
 print "\t-vcf", INFILE
 if CHR:
     print "\t-chr", CHR
-elif POS:
-    print "\t-pos", POS
+elif REGION:
+    print "\t-region", REGION
 elif QUAL:
     print "\t-qual", QUAL
 elif FILTER:
     print "\t-filter", FILTER
 elif GENOTYPE:
-    print "\t-gtp", GENOTYPE
+    print "\t-genotype", GENOTYPE
     if IND:
         print "\t-ind", IND
     else:
         sys.exit("Error, argment -ind is missing!")
-    print "\t-mv", NA
+    print "\t--missing-value", NA
 elif INDEL:
-    print "\t-indel"
+    print "\t--keep-only-indels"
 elif SNP:
-    print "\t-snp" 
+    print "\t--remove-indels" 
 elif IDS:
     print "\t-ids", IDS
+elif IDSFILE:
+    print "\t--ids-file", IDSFILE
 elif PHYPOS:
-    print "\t-phypos", PHYPOS  
-print "\t-o", OUTFILE
+    print "\t--phy-pos", PHYPOS
+elif PHYPOSFILE:
+    print "\t--phy-pos-file", PHYPOSFILE
+print "\t-out", OUTFILE
 print
 #######################################################
 if CHR:
     chrs = split_str_comma_dash(CHR)
     print "keep chromosomes:", chrs
     filter_by_chr(INFILE,chrs, OUTFILE)
-elif POS:
-    tmp = POS.split(':')
+elif REGION:
+    tmp = REGION.split(':')
     chr = tmp[0]
     start = int(tmp[1].split('-')[0])
     end = int(tmp[1].split('-')[1])
     print "keep region: %s, from %d to %d" % (chr, start, end)
-    filter_by_pos(INFILE,chr,start,end,OUTFILE)
+    filter_by_region(INFILE,chr,start,end,OUTFILE)
 elif QUAL:
     cutoff = float(QUAL)
     print "keep variants with qual score no less than %f" % cutoff
@@ -441,28 +452,30 @@ elif SNP:
     filter_indels(INFILE, SNP, OUTFILE)
 elif IDS:
     print "keep variants by ID"
+    ids = IDS.split(',')
+    filter_by_var_ids(INFILE, ids, OUTFILE)
+elif IDSFILE:
+    print "keep variants by ID"
     ids = []
-    if -1 == IDS.find(','):
-        tf = open(IDS)
-        for r in tf:
-            r = r.strip()
-            ids.append(r)
-        tf.close       
-    else:
-        ids = IDS.split(',')
-    filter_by_ids(INFILE, ids, OUTFILE)
+    tf = open(IDSFILE)
+    for r in tf:
+        r = r.strip()
+        ids.append(r)
+    tf.close()
+    filter_by_var_ids(INFILE, ids, OUTFILE)
 elif PHYPOS:
     print "keep variants by physical position"
+    pp = PHYPOS.split(',')
+    filter_by_phypos(INFILE, pp, OUTFILE)
+elif PHYPOSFILE:
+    print "keep variants by physical position"
     pp = []
-    if -1 == PHYPOS.find(','):
-        tf = open(PHYPOS)
-        for r in tf:
-            r = r.strip()
-            arr = r.split()
-            pp.append(arr[0]+":"+arr[1])
-        tf.close       
-    else:
-        pp = PHYPOS.split(',')
+    tf = open(PHYPOSFILE)
+    for r in tf:
+        r = r.strip()
+        arr = r.split()
+        pp.append(arr[0]+":"+arr[1])
+    tf.close()
     filter_by_phypos(INFILE, pp, OUTFILE)
 else:
     pass
