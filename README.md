@@ -27,7 +27,6 @@ Table of Contents
       * [3\.8\.2 Physical Positions were stored in a file](#382-physical-positions-were-stored-in-a-file)
   * [4 References](#4-references)
 
-
 # 1 Introduction
 
 # 2 Requirement and Installation
@@ -38,19 +37,19 @@ Table of Contents
 
 ### 3.1.1 Keep all autosomes (separated by "-")
 
-```python
+```
 python vcfFilter.py -vcf input.vcf -chr chr1-chr22 -out output.vcf
 ```
 
 ### 3.1.2 Keep chromosomes (separated by ",")
 
-```python
+```
 python vcfFilter.py -vcf input.vcf -chr chr1,chr3 -out output.vcf
 ```
 
 ### 3.1.3 Keep chromosomes (separated by "," and "-")
 
-```python
+```
 python vcfFilter.py -vcf input.vcf -chr chr1-chr3,chr6 -out output.vcf
 ```
 
@@ -58,7 +57,7 @@ python vcfFilter.py -vcf input.vcf -chr chr1-chr3,chr6 -out output.vcf
 
 Keep only the first 1 Mb (1-1,000,000) region on chromosome 1:  
 
-```python
+```
 python vcfFilter.py -vcf input.vcf -region chr1:1-1000000 -out output.vcf
 ```
 
@@ -66,7 +65,7 @@ python vcfFilter.py -vcf input.vcf -region chr1:1-1000000 -out output.vcf
 
 Keep variants with phred-scaled quality score no less than 30:  
 
-```python
+```
 python vcfFilter.py -vcf input.vcf -qual 30 -out output.vcf
 ```
 
@@ -74,13 +73,13 @@ python vcfFilter.py -vcf input.vcf -qual 30 -out output.vcf
 
 ### 3.4.1 Keep variants with FILTER flag: "PASS"
 
-```python
+```
 python vcfFilter.py -vcf input.vcf -filter PASS -out output.vcf
 ```
 
 ### 3.4.2 Keep variants with FILTER flags (separated by ",")
 
-```python
+```
 python vcfFilter.py -vcf input.vcf -filter PASS,VQSRTrancheINDEL99.00to99.90,
 VQSRTrancheINDEL99.90to100.00,VQSRTrancheSNP99.00to99.90,
 VQSRTrancheSNP99.90to100.00 -out output.vcf
@@ -90,7 +89,7 @@ VQSRTrancheSNP99.90to100.00 -out output.vcf
 
 Keep homozygous of reference alleles in sample 001 and sample 002:  
 
-```python
+```
 python vcfFilter.py -vcf input.vcf -genotype hom-ref -ind 001,002 -out output.vcf
 ```
 
@@ -127,13 +126,13 @@ site   REF                ALT
 
 ### 3.6.1 keep only sites that contain an indel
 
-```python
+```
 python vcfFilter.py -vcf input.vcf --keep-only-indels -out output.vcf
 ```
 
 ### 3.6.2 exclude sites that contain an indel
 
-```python
+```
 python vcfFilter.py -vcf input.vcf --remove-indels -out output.vcf
 ```
 
@@ -143,11 +142,11 @@ python vcfFilter.py -vcf input.vcf --remove-indels -out output.vcf
 
 Multiple IDs (e.g. dbSNP rsID) can be seperated using ",". 
 
-```python
+```
 python vcfFilter.py -vcf input.vcf -ids rs1234 -out output.vcf
 ```
 
-```python
+```
 python vcfFilter.py -vcf input.vcf -ids rs1234,rs1235 -out output.vcf
 ```
 
@@ -160,7 +159,7 @@ rs1234
 rs1235
 ```
 
-```python
+```
 python vcfFilter.py -vcf input.vcf --ids-file ids.txt -out output.vcf
 ```
 
@@ -170,11 +169,11 @@ python vcfFilter.py -vcf input.vcf --ids-file ids.txt -out output.vcf
 
 Physical positions can be seperated using ",". Each physical position includes chromosome and position that was seperated by ":".
 
-```python
+```
 python vcfFilter.py -vcf input.vcf --phy-pos chr1:1234567, -out output.vcf
 ```
 
-```python
+```
 python vcfFilter.py -vcf input.vcf --phy-pos chr1:1234567,chr2:9887234 -out output.vcf
 ```
 
@@ -187,7 +186,7 @@ chr1  1234567
 chr2  9887234
 ```
 
-```python
+```
 python vcfFilter.py -vcf input.vcf --phy-pos-file phypos.txt -out output.vcf
 ```
 
