@@ -321,6 +321,73 @@ def filter_by_phypos(infile, pp, outfile):
     print "%d of %d variants were written to %s" % (m, n, outfile)
     fw.close()
     fr.close()
+def cmp_gtp(infile, inds, na, outfile,same):
+    '''
+    compare genotype of multiple individuals
+    '''
+    fr = open(infile)
+    fw = open(outfile, 'w')
+    n = 0
+    m = 0
+    idx0 = 0
+    idx = []
+    for r in fr:
+        r = r.strip()
+        if r.startswith("##"):
+            fw.write("%s\n" % r)
+        elif r.startswith("#"):
+            fw.write("%s\n" % r)
+            myind = r.split()
+            if inds[0] in myind:
+                idx0 = myind.index(inds[0])
+            else:
+                sys.exit('%s is not in %s' % (inds[0], infile))
+            for x in inds[1:]:
+                if x in myind:
+                    tmp = myind.index(x)
+                    idx.append(tmp)
+                else:
+                    sys.exit('%s is not in %s' % (x, infile))
+        else:
+            arr = r.split()
+            n += 1
+            flag = True
+            for i in xrange(9,len(arr)):
+                if i in idx:
+                    if same: # same genotype
+                        if na == 'keep': # keep missing
+                            if '.' != arr[idx0] and  '.' != arr[i]:
+                                if arr[idx0][0:3] != arr[i][0:3]:
+                                    flag = False
+                                    break
+                        else: # remove missing
+                            if '.' == arr[idx0] or  '.' == arr[i]:
+                                flag = False
+                                break
+                            else:
+                                if arr[idx0][0:3] != arr[i][0:3]:
+                                    flag = False
+                                    break
+                    else: # diff genotype
+                        if na == 'keep': # keep missing
+                            if '.' != arr[idx0] and  '.' != arr[i]:
+                                if arr[idx0][0:3] == arr[i][0:3]:
+                                    flag = False
+                                    break
+                        else: # remove missing
+                            if '.' == arr[idx0] or  '.' == arr[i]:
+                                flag = False
+                                break
+                            else:
+                                if arr[idx0][0:3] == arr[i][0:3]:
+                                    flag = False
+                                    break
+            if flag:
+                fw.write("%s\n" % r)
+                m += 1
+    print "%d of %d variants were written to %s" % (m, n, outfile)
+    fw.close()
+    fr.close()
 #######################################################
 strattime = time.time()
 #######################################################
@@ -343,9 +410,11 @@ parser.add_argument('-ids', help='filter by ID', type=str)
 parser.add_argument('--ids-file', help='filter by ID', type=str)
 parser.add_argument('--phy-pos', help='filter by physical position', type=str)
 parser.add_argument('--phy-pos-file', help='filter by physical position', type=str)
-###individual
+parser.add_argument('--cmp-gtp-same', help='compare genotype of multiple individuals', action='store_true')
+parser.add_argument('--cmp-gtp-diff', help='compare genotype of multiple individuals', action='store_true')
+### individual
 parser.add_argument('-ind', help='individual id', type=str)
-###missing value
+### missing value
 parser.add_argument('--missing-value', help='how to deal with missing values', default="keep", type=str, choices=["keep", "rm"])
 ### output
 parser.add_argument('-out', help='output vcf file', type=str, default='output.vcf')
@@ -366,6 +435,8 @@ IDS = args['ids'] if 'ids' in args else None
 IDSFILE = args['ids_file'] if 'ids_file' in args else None
 PHYPOS = args['phy_pos'] if 'phy_pos' in args else None
 PHYPOSFILE = args['phy_pos_file'] if 'phy_pos_file' in args else None
+CMPGTPSAME = args['cmp_gtp_same'] if 'cmp_gtp_same' in args else None
+CMPGTPDIFF = args['cmp_gtp_diff'] if 'cmp_gtp_diff' in args else None
 #######################################################
 print "@-------------------------------------------------------------@"
 print "|       vcfFilter     |     v1.0.0      |    16 May 2016      |"
@@ -404,6 +475,20 @@ elif PHYPOS:
     print "\t--phy-pos", PHYPOS
 elif PHYPOSFILE:
     print "\t--phy-pos-file", PHYPOSFILE
+elif CMPGTPSAME:
+    print "\t--cmp-gtp-same"
+    if IND:
+        print "\t-ind", IND
+    else:
+        sys.exit("Error, argment -ind is missing!")
+    print "\t--missing-value", NA
+elif CMPGTPDIFF:
+    print "\t--cmp-gtp-diff"
+    if IND:
+        print "\t-ind", IND
+    else:
+        sys.exit("Error, argment -ind is missing!")
+    print "\t--missing-value", NA
 print "\t-out", OUTFILE
 print
 #######################################################
@@ -477,6 +562,24 @@ elif PHYPOSFILE:
         pp.append(arr[0]+":"+arr[1])
     tf.close()
     filter_by_phypos(INFILE, pp, OUTFILE)
+elif CMPGTPSAME:
+    print "compare genotype of multiple individuals"
+    print "only variants have the same genotype across the following individuals will be kept"
+    inds = split_str_comma(IND)
+    if len(inds) > 1:
+        print "individuals:", inds
+    else:
+        sys.exit('at least two individuals should be provided')
+    cmp_gtp(INFILE, inds, NA, OUTFILE,True)
+elif CMPGTPDIFF:
+    print "compare genotype of multiple individuals"
+    inds = split_str_comma(IND)
+    print "only variants have the different genotype between the first individual and others will be kept"
+    if len(inds) > 1:
+        print "individuals:", inds[0], 'vs.', inds[1:]
+    else:
+        sys.exit('at least two individuals should be provided')
+    cmp_gtp(INFILE, inds, NA, OUTFILE,False)
 else:
     pass
 ###############################################################################

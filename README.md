@@ -25,6 +25,9 @@ Table of Contents
     * [3\.8 Filter by Physical Positions](#38-filter-by-physical-positions)
       * [3\.8\.1 Physical positions were seperated by ','](#381-physical-positions-were-seperated-by-)
       * [3\.8\.2 Physical Positions were stored in a file](#382-physical-positions-were-stored-in-a-file)
+    * [3\.9 Compare genotype of multiple individuals](#39-compare-genotype-of-multiple-individuals)
+      * [3\.9\.1 Only variants have the same genotype across specified individuals will be kept](#391-only-variants-have-the-same-genotype-across-specified-individuals-will-be-kept)
+      * [3\.9\.2 Only variants have different genotype between the first individual and others will be kept](#392-only-variants-have-different-genotype-between-the-first-individual-and-others-will-be-kept)
   * [4 References](#4-references)
 
 # 1 Introduction
@@ -90,7 +93,8 @@ VQSRTrancheSNP99.90to100.00 -out output.vcf
 Keep homozygous of reference alleles in sample 001 and sample 002:  
 
 ```
-python vcfFilter.py -vcf input.vcf -genotype hom-ref -ind 001,002 -out output.vcf
+python vcfFilter.py -vcf input.vcf -genotype hom-ref -ind 001,002 
+  --missing-value keep -out output.vcf
 ```
 
 Values for **-genotype**:
@@ -188,6 +192,40 @@ chr2  9887234
 
 ```
 python vcfFilter.py -vcf input.vcf --phy-pos-file phypos.txt -out output.vcf
+```
+
+## 3.9 Compare genotype of multiple individuals
+
+### 3.9.1 Only variants have the same genotype across specified individuals will be kept
+
+e.g., Only variants have the same genotype in individual `001` and `003` is kept.
+
+```
+python vcfFilter.py -vcf input.vcf --cmp-gtp-same -ind 001,003 
+  --missing-value keep -out output.vcf
+```
+
+### 3.9.2 Only variants have different genotype between the first individual and others will be kept
+
+e.g., Only variants have the different genotype between individual `001` and `003` will be kept.
+
+```
+python vcfFilter.py -vcf input.vcf --cmp-gtp-diff -ind 001,003 
+  --missing-value keep -out output.vcf
+```
+
+e.g., Only variants have the different genotype between individual `001` and `003` and `004` will be kept.
+
+```
+python vcfFilter.py -vcf input.vcf --cmp-gtp-diff -ind 001,003,004 
+  --missing-value keep -out output.vcf
+```
+
+Genotype comparisions:
+
+```
+001 cmp 003
+001 cmp 004
 ```
 
 # 4 References
