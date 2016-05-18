@@ -28,6 +28,11 @@ Table of Contents
     * [3\.9 Compare genotype of multiple individuals](#39-compare-genotype-of-multiple-individuals)
       * [3\.9\.1 Only variants have the same genotype across specified individuals will be kept](#391-only-variants-have-the-same-genotype-across-specified-individuals-will-be-kept)
       * [3\.9\.2 Only variants have different genotype between the first individual and others will be kept](#392-only-variants-have-different-genotype-between-the-first-individual-and-others-will-be-kept)
+    * [3\.10 Filter by number of alleles](#310-filter-by-number-of-alleles)
+      * [3\.10\.1 minimum number of alleles](#3101-minimum-number-of-alleles)
+      * [3\.10\.2 maximum number of alleles](#3102-maximum-number-of-alleles)
+      * [3\.10\.3 filter biallelic site](#3103-filter-biallelic-site)
+      * [3\.10\.4 filter multiallelic site](#3104-filter-multiallelic-site)
   * [4 References](#4-references)
 
 # 1 Introduction
@@ -226,6 +231,40 @@ Genotype comparisions:
 ```
 001 cmp 003
 001 cmp 004
+```
+
+## 3.10 Filter by number of alleles
+
+### 3.10.1 minimum number of alleles
+
+Only sites have alleles no less than (`>=`) the minimum number will be kept.
+
+```
+python vcfFilter.py -vcf input.vcf --min-alleles 2 -out output.vcf
+```
+
+### 3.10.2 maximum number of alleles
+
+Only sites have alleles no more than (`<=`) the maximum number will be kept.
+
+```
+python vcfFilter.py -vcf input.vcf --max-alleles 2 -out output.vcf
+```
+
+### 3.10.3 filter biallelic site
+
+A biallelic site is a specific locus in a genome that contains two observed alleles, counting the reference as one, and therefore allowing for one variant allele.
+
+```
+python vcfFilter.py -vcf input.vcf --min-alleles 2 --max-alleles 2 -out output.vcf
+```
+
+### 3.10.4 filter multiallelic site
+
+A multiallelic site is a specific locus in a genome that contains three or more observed alleles, again counting the reference as one, and therefore allowing for two or more variant alleles.
+
+```
+python vcfFilter.py -vcf input.vcf --min-alleles 3 -out output.vcf
 ```
 
 # 4 References

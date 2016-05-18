@@ -388,6 +388,39 @@ def cmp_gtp(infile, inds, na, outfile,same):
     print "%d of %d variants were written to %s" % (m, n, outfile)
     fw.close()
     fr.close()
+def filter_num_alleles(infile, minc, maxc, outfile):
+	'''
+	filter by num of alleles
+	'''
+	fr = open(infile)
+	fw = open(outfile, 'w')
+	n = 0
+	m = 0
+	for r in fr:
+		r = r.strip()
+		if r.startswith("#"):
+			fw.write("%s\n" % r)
+		else:
+			n += 1
+			arr = r.split()
+			num = len(arr[4].split(',')) + 1
+			if minc and maxc:
+				if maxc >= num >= minc:
+					fw.write("%s\n" % r)
+					m += 1
+			elif minc:
+				if num >= minc:
+					fw.write("%s\n" % r)
+					m += 1
+			elif maxc:
+				if num <= maxc:
+					fw.write("%s\n" % r)
+					m += 1
+			else:
+				sys.exit('please check value of --min-alleles and/or --max-alleles')
+	print "%d of %d variants were written to %s" % (m, n, outfile)
+	fw.close()
+	fr.close()
 #######################################################
 strattime = time.time()
 #######################################################
@@ -412,6 +445,8 @@ parser.add_argument('--phy-pos', help='filter by physical position', type=str)
 parser.add_argument('--phy-pos-file', help='filter by physical position', type=str)
 parser.add_argument('--cmp-gtp-same', help='compare genotype of multiple individuals', action='store_true')
 parser.add_argument('--cmp-gtp-diff', help='compare genotype of multiple individuals', action='store_true')
+parser.add_argument('--min-alleles', help='minimum number of alleles', type=int)
+parser.add_argument('--max-alleles', help='maximum number of alleles', type=int)
 ### individual
 parser.add_argument('-ind', help='individual id', type=str)
 ### missing value
@@ -437,6 +472,8 @@ PHYPOS = args['phy_pos'] if 'phy_pos' in args else None
 PHYPOSFILE = args['phy_pos_file'] if 'phy_pos_file' in args else None
 CMPGTPSAME = args['cmp_gtp_same'] if 'cmp_gtp_same' in args else None
 CMPGTPDIFF = args['cmp_gtp_diff'] if 'cmp_gtp_diff' in args else None
+MINALLELES = args['min_alleles'] if 'min_alleles' in args else None
+MAXALLELES = args['max_alleles'] if 'max_alleles' in args else None
 #######################################################
 print "@-------------------------------------------------------------@"
 print "|       vcfFilter     |     v1.0.0      |    16 May 2016      |"
@@ -489,6 +526,13 @@ elif CMPGTPDIFF:
     else:
         sys.exit("Error, argment -ind is missing!")
     print "\t--missing-value", NA
+elif MINALLELES and MAXALLELES:
+	print "\t--min-alleles", MINALLELES
+	print "\t--max-alleles", MAXALLELES
+elif MINALLELES:
+	print "\t--min-alleles", MINALLELES
+elif MAXALLELES:
+	print "\t--max-alleles", MAXALLELES 
 print "\t-out", OUTFILE
 print
 #######################################################
@@ -580,6 +624,15 @@ elif CMPGTPDIFF:
     else:
         sys.exit('at least two individuals should be provided')
     cmp_gtp(INFILE, inds, NA, OUTFILE,False)
+elif MINALLELES and MAXALLELES:
+	print "keep sites with minimum {} alleles and maximum {} alleles".format(MINALLELES, MAXALLELES)
+	filter_num_alleles(INFILE, MINALLELES, MAXALLELES, OUTFILE)
+elif MINALLELES:
+	print "keep sites with minimum {} alleles".format(MINALLELES)
+	filter_num_alleles(INFILE, MINALLELES, MAXALLELES, OUTFILE)
+elif MAXALLELES:
+	print "keep sites with maximum {} alleles".format(MAXALLELES)
+	filter_num_alleles(INFILE, MINALLELES, MAXALLELES, OUTFILE)
 else:
     pass
 ###############################################################################
