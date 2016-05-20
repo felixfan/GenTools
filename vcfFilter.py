@@ -389,8 +389,41 @@ def cmp_gtp(infile, inds, na, outfile,same):
     fw.close()
     fr.close()
 def filter_num_alleles(infile, minc, maxc, outfile):
+    '''
+    filter by num of alleles
+    '''
+    fr = open(infile)
+    fw = open(outfile, 'w')
+    n = 0
+    m = 0
+    for r in fr:
+        r = r.strip()
+        if r.startswith("#"):
+            fw.write("%s\n" % r)
+        else:
+            n += 1
+            arr = r.split()
+            num = len(arr[4].split(',')) + 1
+            if minc and maxc:
+                if maxc >= num >= minc:
+                    fw.write("%s\n" % r)
+                    m += 1
+                elif minc:
+                    if num >= minc:
+                        fw.write("%s\n" % r)
+                        m += 1
+            elif maxc:
+                if num <= maxc:
+                    fw.write("%s\n" % r)
+                    m += 1
+            else:
+                sys.exit('please check value of --min-alleles and/or --max-alleles')
+    print "%d of %d variants were written to %s" % (m, n, outfile)
+    fw.close()
+    fr.close()
+def filter_by_info(infile, outfile,key,operation,values,na,stype='float'):
 	'''
-	filter by num of alleles
+	filter by info
 	'''
 	fr = open(infile)
 	fw = open(outfile, 'w')
@@ -401,26 +434,77 @@ def filter_num_alleles(infile, minc, maxc, outfile):
 		if r.startswith("#"):
 			fw.write("%s\n" % r)
 		else:
-			n += 1
 			arr = r.split()
-			num = len(arr[4].split(',')) + 1
-			if minc and maxc:
-				if maxc >= num >= minc:
-					fw.write("%s\n" % r)
-					m += 1
-			elif minc:
-				if num >= minc:
-					fw.write("%s\n" % r)
-					m += 1
-			elif maxc:
-				if num <= maxc:
-					fw.write("%s\n" % r)
-					m += 1
-			else:
-				sys.exit('please check value of --min-alleles and/or --max-alleles')
+			n += 1
+			ar = arr[7].split(';')
+			flag = False # whether key is in info
+			for z in ar:
+				if z.startswith(key):
+					flag = True
+					a = z.split('=')
+					fla = True # keep site
+					if a[1] == '.': # missing value
+						if na == 'keep':
+							fla = True
+						else:
+							fla = False
+					else: # non-missing value
+						bs = a[1].split(',') # multiple value
+						if operation == ">=":
+							for b in bs:
+								if float(b) < values[0]:
+									fla = False
+									break
+						elif operation == "<=":
+							for b in bs:
+								if float(b) > values[0]:
+									fla = False
+									break
+						elif operation == "<":
+							for b in bs:
+								if float(b) >= values[0]:
+									fla = False
+									break
+						elif operation == ">":
+							for b in bs:
+								if float(b) <= values[0]:
+									fla = False
+									break
+						elif operation == "!=":
+							for b in bs:
+								if 'str' == stype:
+									if b in values:
+										fla = False
+										break
+								else:
+									if float(b) == values:
+										fla = False
+										break
+						elif operation == "=":
+							for b in bs:
+								if 'str' == stype:
+									if not b in values:
+										fla = False
+										break
+								else:
+									if float(b) != values:
+										fla = False
+										break
+					if fla:
+							fw.write("%s\n" % r)
+							m += 1
+				if flag: # only one key in info, do not need to check other key
+					break
+			if not flag: # key is not in info, wrong key?
+				sys.exit('{} is not find in site {} {}'.format(key, arr[0], arr[1]))
 	print "%d of %d variants were written to %s" % (m, n, outfile)
 	fw.close()
 	fr.close()
+def check_float(s):
+	try:
+		return float(s)
+	except ValueError:
+		return False
 #######################################################
 strattime = time.time()
 #######################################################
@@ -447,6 +531,7 @@ parser.add_argument('--cmp-gtp-same', help='compare genotype of multiple individ
 parser.add_argument('--cmp-gtp-diff', help='compare genotype of multiple individuals', action='store_true')
 parser.add_argument('--min-alleles', help='minimum number of alleles', type=int)
 parser.add_argument('--max-alleles', help='maximum number of alleles', type=int)
+parser.add_argument('-info', help='filter by info keys', type=str)
 ### individual
 parser.add_argument('-ind', help='individual id', type=str)
 ### missing value
@@ -474,9 +559,10 @@ CMPGTPSAME = args['cmp_gtp_same'] if 'cmp_gtp_same' in args else None
 CMPGTPDIFF = args['cmp_gtp_diff'] if 'cmp_gtp_diff' in args else None
 MINALLELES = args['min_alleles'] if 'min_alleles' in args else None
 MAXALLELES = args['max_alleles'] if 'max_alleles' in args else None
+INFO = args['info'] if 'info' in args else None
 #######################################################
 print "@-------------------------------------------------------------@"
-print "|       vcfFilter     |     v1.0.0      |    16 May 2016      |"
+print "|       vcfFilter     |     v1.0.0      |    19 May 2016      |"
 print "|-------------------------------------------------------------|"
 print "|  (C) 2015 Felix Yanhui Fan, GNU General Public License, v2  |"
 print "|-------------------------------------------------------------|"
@@ -527,12 +613,15 @@ elif CMPGTPDIFF:
         sys.exit("Error, argment -ind is missing!")
     print "\t--missing-value", NA
 elif MINALLELES and MAXALLELES:
-	print "\t--min-alleles", MINALLELES
-	print "\t--max-alleles", MAXALLELES
+    print "\t--min-alleles", MINALLELES
+    print "\t--max-alleles", MAXALLELES
 elif MINALLELES:
-	print "\t--min-alleles", MINALLELES
+    print "\t--min-alleles", MINALLELES
 elif MAXALLELES:
-	print "\t--max-alleles", MAXALLELES 
+    print "\t--max-alleles", MAXALLELES
+elif INFO:
+    print "\t-info", INFO
+    print "\t--missing-value", NA
 print "\t-out", OUTFILE
 print
 #######################################################
@@ -625,16 +714,74 @@ elif CMPGTPDIFF:
         sys.exit('at least two individuals should be provided')
     cmp_gtp(INFILE, inds, NA, OUTFILE,False)
 elif MINALLELES and MAXALLELES:
-	print "keep sites with minimum {} alleles and maximum {} alleles".format(MINALLELES, MAXALLELES)
-	filter_num_alleles(INFILE, MINALLELES, MAXALLELES, OUTFILE)
+    print "keep sites with minimum {} alleles and maximum {} alleles".format(MINALLELES, MAXALLELES)
+    filter_num_alleles(INFILE, MINALLELES, MAXALLELES, OUTFILE)
 elif MINALLELES:
-	print "keep sites with minimum {} alleles".format(MINALLELES)
-	filter_num_alleles(INFILE, MINALLELES, MAXALLELES, OUTFILE)
+    print "keep sites with minimum {} alleles".format(MINALLELES)
+    filter_num_alleles(INFILE, MINALLELES, MAXALLELES, OUTFILE)
 elif MAXALLELES:
-	print "keep sites with maximum {} alleles".format(MAXALLELES)
-	filter_num_alleles(INFILE, MINALLELES, MAXALLELES, OUTFILE)
+    print "keep sites with maximum {} alleles".format(MAXALLELES)
+    filter_num_alleles(INFILE, MINALLELES, MAXALLELES, OUTFILE)
+elif INFO:
+    print "filter sites by INFO keys"
+    if -1 != INFO.find('>='):
+        tmp = INFO.split('>=')
+        key = tmp[0]
+        operation = '>='
+        value = [float(tmp[1])]
+        print "keep sites with {} {} {}".format(key, operation, value)
+        filter_by_info(INFILE, OUTFILE,key,operation,value,NA)
+    elif -1 != INFO.find('<='):
+        tmp = INFO.split('<=')
+        key = tmp[0]
+        operation = '<='
+        value = [float(tmp[1])]
+        print "keep sites with {} {} {}".format(key, operation, value)
+        filter_by_info(INFILE, OUTFILE,key,operation,value,NA)
+    elif -1 != INFO.find('<'):
+        tmp = INFO.split('<')
+        key = tmp[0]
+        operation = '<'
+        value = [float(tmp[1])]
+        print "keep sites with {} {} {}".format(key, operation, value)
+        filter_by_info(INFILE, OUTFILE,key,operation,value,NA)
+    elif -1 != INFO.find('>'):
+        tmp = INFO.split('>')
+        key = tmp[0]
+        operation = '>'
+        value = [float(tmp[1])]
+        print "keep sites with {} {} {}".format(key, operation, value)
+        filter_by_info(INFILE, OUTFILE,key,operation,value,NA)
+    elif -1 != INFO.find('!='):
+        tmp = INFO.split('!=')
+        key = tmp[0]
+        operation = '!='
+        value = check_float(tmp[1])
+        values = None
+        if value:
+            stype = 'float'
+            values = [value]
+        else:
+            stype = 'str'
+            values = tmp[1].split(',')
+        print "keep sites with {} {} {}".format(key, operation, values)
+        filter_by_info(INFILE, OUTFILE,key,operation,values,NA,stype)
+    elif -1 != INFO.find('='):
+        tmp = INFO.split('=')
+        key = tmp[0]
+        operation = '='
+        value = check_float(tmp[1])
+        values = None
+        if value:
+            stype = 'float'
+            values = [value]
+        else:
+            stype = 'str'
+            values = tmp[1].split(',')
+        print "keep sites with {} {} {}".format(key, operation, values)
+        filter_by_info(INFILE, OUTFILE,key,operation,values,NA,stype)
 else:
-    pass
+    sys.exit('do nothing!')
 ###############################################################################
 usedtime = time.time() - strattime
 print
