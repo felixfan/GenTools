@@ -33,6 +33,11 @@ Table of Contents
       * [3\.10\.2 maximum number of alleles](#3102-maximum-number-of-alleles)
       * [3\.10\.3 filter biallelic site](#3103-filter-biallelic-site)
       * [3\.10\.4 filter multiallelic site](#3104-filter-multiallelic-site)
+    * [3\.11 Filter by INFO](#311-filter-by-info)
+      * [3\.11\.1 brief introduction](#3111-brief-introduction)
+      * [3\.11\.2 examples](#3112-examples)
+        * [3\.11\.2\.1 remove variants located in the intergenic, downstream or upstream region](#31121-remove-variants-located-in-the-intergenic-downstream-or-upstream-region)
+        * [3\.11\.2\.2 remove variants wilth allele frequency in 1000 genomes higher than 0\.05](#31122-remove-variants-wilth-allele-frequency-in-1000-genomes-higher-than-005)
   * [4 References](#4-references)
 
 # 1 Introduction
@@ -265,6 +270,61 @@ A multiallelic site is a specific locus in a genome that contains three or more 
 
 ```
 python vcfFilter.py -vcf input.vcf --min-alleles 3 -out output.vcf
+```
+
+## 3.11 Filter by INFO
+
+### 3.11.1 brief introduction
+
+INFO fields in VCF are encoded as a semicolon-separated series of short keys with optional values in the format:
+
+```
+<key>=<value>[,value]
+```
+
+When [annovar](http://annovar.openbioinformatics.org/en/latest/) was used to annotate the variants, multiple additional key and value pairs will be added in the INFO feild. Suppose `.` was used to reprent the missing value.   
+
+commands format for numeric value (only one value):
+```
+-info '<key>>=<value>'
+-info '<key><=<value>'
+-info '<key>><value>'
+-info '<key><<value>'
+```
+commands format for numeric value or string type value (one value or multiple values seperated by ','):
+
+```
+-info '<key>=<value>[,value]'
+-info '<key>!=<value>[,value]'
+```
+
+- Whick `key` can be used depends on your own vcf. 
+- There are six operations `>=`, `>`, `<=`, `<`, `=`, `!=`. 
+- The first four operations only accept **ONE float** value. Int value will be convert to float, but string or multiple value will cause ERROR. 
+- The last two operation can accept **one or multiple float or string values**. If you want to filter by an int such as 'AC=10', you need to use `-info 'AC=10,'`.
+- if there are multiple values for the key in vcf, all values must pass the cutoff.
+
+The following two examples show how it works. Please be noted that annovar was used to annotate the vcf, so there are some keys may not in your vcf.
+
+### 3.11.2 examples
+
+#### 3.11.2.1 remove variants located in the intergenic, downstream or upstream region
+
+```
+python vcfFilter.py -vcf input.vcf -out output.vcf
+  -info 'Func_refGene!=intergenic,downstream,upstream' 
+```
+
+By default, missing value will be kept, chang this by adding `--missing-value rm`
+```
+python vcfFilter.py -vcf input.vcf -out output.vcf
+  -info 'Func_refGene!=intergenic,downstream,upstream' --missing-value rm
+```
+
+#### 3.11.2.2 remove variants wilth allele frequency in 1000 genomes higher than 0.05
+
+```
+python vcfFilter.py -vcf input.vcf -info '1000g2015aug_all<=0.05' --missing-value keep -out output.vcf
 ```
 
 # 4 References
