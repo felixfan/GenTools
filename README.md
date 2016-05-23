@@ -38,6 +38,7 @@ Table of Contents
       * [3\.11\.2 examples](#3112-examples)
         * [3\.11\.2\.1 remove variants located in the intergenic, downstream or upstream region](#31121-remove-variants-located-in-the-intergenic-downstream-or-upstream-region)
         * [3\.11\.2\.2 remove variants wilth allele frequency in 1000 genomes higher than 0\.05](#31122-remove-variants-wilth-allele-frequency-in-1000-genomes-higher-than-005)
+    * [3\.12 Filter compound heterozygous](#312-filter-compound-heterozygous)
   * [4 References](#4-references)
 
 # 1 Introduction
@@ -327,6 +328,25 @@ python vcfFilter.py -vcf input.vcf -out output.vcf
 python vcfFilter.py -vcf input.vcf -info '1000g2015aug_all<=0.05' --missing-value keep -out output.vcf
 ```
 
+## 3.12 Filter compound heterozygous
+
+Find all heterozygous variant pairs. We need perform the gene-based annotation first, suppose we have performed the [ANNOVAR](http://annovar.openbioinformatics.org/en/latest/user-guide/gene) `refGene` based annotation. The key in the INFO field for gene name is `Gene_refGene`. The key in the INFO field for function is `Func_refGene` and values for function are: `exonic`, `splicing`, `ncRNA_exonic`, `ncRNA_intronic`, `UTR5`, `UTR3`, `intronic`, `upstream`, `downstream`, `intergenic`.
+
+e.g. find all variant pairs that individual 001 and 002 have two heterozygous while other individuals only have one or zero heterozygous. Only variants in exonic, splicing and ncRNA_exonic region were considered.
+
+```
+python vcfFilter.py -vcf input.vcf --comp-het --gene-key Gene_refGene
+  --func-key Func_refGene --func-values 'exonic,splicing,ncRNA_exonic' 
+  -ind '001,002' -out output.vcf
+```
+
+**Note:**  
+- key and values are based on annotation, check annotated vcf to identify them.    
+- include variants in which region for analysis is based on what you are looking for (functional variants? regulatory variants?).       
+- precedence of function values listed above are in decreased orders       
+- generally, you do not add 'intergenic' to `--func-values`      
+
+    
 # 4 References
 
 * [VCF (Variant Call Format) version 4.0](http://www.1000genomes.org/wiki/Analysis/vcf4.0)

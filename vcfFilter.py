@@ -317,7 +317,7 @@ def filter_by_phypos(infile, pp, outfile):
             if tmp in pp:
                 fw.write("%s\n" % r)
                 m += 1
-                pp.remove(tmp) # rm variants that already print out
+                # pp.remove(tmp) # rm variants that already print out
     print "%d of %d variants were written to %s" % (m, n, outfile)
     fw.close()
     fr.close()
@@ -505,6 +505,134 @@ def check_float(s):
 		return float(s)
 	except ValueError:
 		return False
+def extract_genotype(infile, pp, outfile):
+    '''
+    extract genotype by chr:pos
+    '''
+    fr = open(infile)
+    fw = open(outfile, 'w')
+    m = 0
+    for r in fr:
+        r = r.strip()
+        if not r.startswith("#"):
+            arr = r.split()
+            tmp = "{}:{}".format(arr[0],arr[1])
+            # print tmp
+            if tmp in pp:
+                fw.write("{}\t{}\t{}\t{}".format(arr[0], arr[1], arr[3], arr[4]))
+                for a in arr[9:]:
+                    if a != '.':
+                        fw.write('\t{}'.format(a[:3]))
+                    else:
+                        fw.write('\t.')
+                fw.write('\n')
+                m += 1 
+    print "genotype of {} variants were written to {}".format(m, outfile)
+    fw.close()
+    fr.close()
+def filter_comp_het(infile, inds, geneKey, funcKey, funcValues, outfile):
+    '''
+    filter by compound heterozygous
+    '''
+    fr = open(infile)
+    fp = open(outfile + '.compHetPairs.txt', 'w')
+    n = 0 # total sites
+    indidx = []
+    genes = {}
+    gene = ''
+    pp = []
+    for r in fr:
+        r = r.strip()
+        if r.startswith("##"):
+            pass
+        elif r.startswith("#"):
+            myind = r.split()
+            print "there are {} individuals in {}\nthey are: {}".format(len(myind[9:]), infile, myind[9:])
+            for x in inds:
+                if x in myind:
+                    idx = myind.index(x)
+                    indidx.append(idx)
+                else:
+                    sys.exit('{} is not in {}'.format(x, infile))
+        else:
+            arr = r.split()
+            n += 1
+            ar = arr[7].split(';')
+            flag1 = False # whether func key is in info and value is in funcValues
+            flag2 = False # whether gene key is in info
+            for kv in ar: # check keys in info and value in funcValues
+                if kv.startswith(funcKey):
+                    a = kv.split('=')
+                    if not a[1] in funcValues:
+                        break
+                    flag1 = True
+                if kv.startswith(geneKey):
+                    gene = kv.split('=')[1]
+                    flag2 = True
+                if flag1 and flag2:
+                    break
+            if flag1 and flag2: # yes
+                if not gene in genes:
+                    genes[gene] = []
+                one = [arr[0], arr[1]] # non-comp group
+                flag3 = True
+                for gidx in xrange(9,len(arr)):
+                    if arr[gidx] != '.': # non-missing
+                        gtp = arr[gidx][:3]
+                        c = gtp.count('0')
+                        if c == 1: # het
+                            if not gidx in indidx: # non-comp group
+                                one.append(1)
+                        else: # non - het
+                            if gidx in indidx: # comp group
+                                flag3 = False
+                                break
+                            else: # non-comp group
+                                one.append(0)
+                    else: # missing vale
+                        flag3 = False
+                        break
+                if flag3:
+                    genes[gene].append(one)
+    fr.close()
+    # check comp
+    chg = [] # total genes have comp het
+    chv = 0 # total comp het
+    for k, v in genes.items():
+        if len(v) > 1:
+            flag5 = False
+            for i in xrange(len(v)):
+                for j in xrange(len(v)):
+                    if j > i:
+                        flag4 = True
+                        for z in xrange(2, len(v[i])):
+                            if v[i][z] + v[j][z] > 1:
+                                flag4 = False
+                                break
+                        if flag4:
+                            chrom = v[i][:2][0]
+                            p1 = v[i][:2][1]
+                            p2 = v[j][:2][1]
+                            fp.write("{}\t{}\t{}\t{}\n".format(k, chrom, p1, p2))
+                            pp.append("{}:{}".format(chrom, p1))
+                            pp.append("{}:{}".format(chrom, p2))
+                            chv += 1
+                            flag5 = True
+            if flag5:
+                chg.append(k)
+    pp = list(set(pp))
+    fp.close()
+    print "there are total {} variants in {}".format(n, infile)
+    print "\nnumber of genes: {}".format(len(chg))
+    print "those genes are: {}".format(chg)
+    print "number of variants: {}".format(len(pp))
+    print "number of compound heterozygous: {}".format(chv)
+    print "write compound heterozygous to {}.compHetPairs.txt".format(outfile)
+    print "write variants to {}".format(outfile)
+    filter_by_phypos(infile, pp, outfile)
+    extract_genotype(infile, pp, outfile+'.gtp.txt')
+    
+
 #######################################################
 strattime = time.time()
 #######################################################
@@ -532,6 +660,10 @@ parser.add_argument('--cmp-gtp-diff', help='compare genotype of multiple individ
 parser.add_argument('--min-alleles', help='minimum number of alleles', type=int)
 parser.add_argument('--max-alleles', help='maximum number of alleles', type=int)
 parser.add_argument('-info', help='filter by info keys', type=str)
+parser.add_argument('--comp-het', help='filter by compound heterozygous', action='store_true')
+parser.add_argument('--gene-key', help='key for gene annotation in INFO field', type = str)
+parser.add_argument('--func-key', help='key for function annotation in INFO field', type = str)
+parser.add_argument('--func-values', help='value for function annotation in INFO field', type = str)
 ### individual
 parser.add_argument('-ind', help='individual id', type=str)
 ### missing value
@@ -560,11 +692,15 @@ CMPGTPDIFF = args['cmp_gtp_diff'] if 'cmp_gtp_diff' in args else None
 MINALLELES = args['min_alleles'] if 'min_alleles' in args else None
 MAXALLELES = args['max_alleles'] if 'max_alleles' in args else None
 INFO = args['info'] if 'info' in args else None
+COMPHET = args['comp_het'] if 'comp_het' in args else None
+GENEKEY = args['gene_key'] if 'gene_key' in args else None
+FUNCKEY = args['func_key'] if 'func_key' in args else None
+FUNCVALUES = args['func_values'] if 'func_values' in args else None
 #######################################################
 print "@-------------------------------------------------------------@"
-print "|       vcfFilter     |     v1.0.0      |    19 May 2016      |"
+print "|       vcfFilter     |     v1.0.0      |    23 May 2016      |"
 print "|-------------------------------------------------------------|"
-print "|  (C) 2015 Felix Yanhui Fan, GNU General Public License, v2  |"
+print "|  (C) 2016 Felix Yanhui Fan, GNU General Public License, v2  |"
 print "|-------------------------------------------------------------|"
 print "|    For documentation, citation & bug-report instructions:   |"
 print "|          http://felixfan.github.io/vcfFilter                |"
@@ -622,6 +758,24 @@ elif MAXALLELES:
 elif INFO:
     print "\t-info", INFO
     print "\t--missing-value", NA
+elif COMPHET:
+    print "\t--comp-het"
+    if IND:
+        print "\t-ind", IND
+    else:
+        sys.exit("Error, argment -ind is missing!")
+    if GENEKEY:
+        print "\t--gene-key", GENEKEY
+    else:
+        sys.exit("Error, argment --gene-key is missing!")
+    if FUNCKEY:
+        print "\t--func-key", FUNCKEY
+    else:
+        sys.exit("Error, argment --func-key is missing!")
+    if FUNCVALUES:
+        print "\t--func-values", FUNCVALUES
+    else:
+        sys.exit("Error, argment --func-values is missing!")    
 print "\t-out", OUTFILE
 print
 #######################################################
@@ -780,6 +934,12 @@ elif INFO:
             values = tmp[1].split(',')
         print "keep sites with {} {} {}".format(key, operation, values)
         filter_by_info(INFILE, OUTFILE,key,operation,values,NA,stype)
+elif COMPHET:
+    inds = split_str_comma(IND)
+    funcValues = split_str_comma(FUNCVALUES)
+    print "filter by compound hetrozygous"
+    print "find compound hetrozygous in these individuals: {}".format(inds)
+    filter_comp_het(INFILE, inds, GENEKEY, FUNCKEY, funcValues, OUTFILE)
 else:
     sys.exit('do nothing!')
 ###############################################################################
