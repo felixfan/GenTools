@@ -81,7 +81,7 @@ def filter_by_chr(infile, chrs,outfile):
     fw.close()
     fr.close()
     
-def filter_by_region(infile, chr, start, end, outfile):
+def filter_by_region(infile, chrom, start, end, outfile, exclude=False):
     '''
     filter by region
     '''
@@ -96,9 +96,16 @@ def filter_by_region(infile, chr, start, end, outfile):
         else:
             arr = r.split()
             n += 1
-            if arr[0] == chr and int(arr[1]) >= start and int(arr[1]) <= end:
-                fw.write("%s\n" % r)
-                m += 1
+            if not exclude:
+                if arr[0] == chrom and int(arr[1]) >= start and int(arr[1]) <= end:
+                    fw.write("%s\n" % r)
+                    m += 1
+            else:
+                if arr[0] == chrom and int(arr[1]) >= start and int(arr[1]) <= end:
+                    pass
+                else:
+                    fw.write("%s\n" % r)
+                    m += 1
     print "%d of %d variants were written to %s" % (m, n, outfile)
     fw.close()
     fr.close()
@@ -196,6 +203,14 @@ def check_allele(alleleStr, gtp, na):
                     return True
                 else:
                     return False
+            elif gtp =="not-hom-alt":
+                if 0 < s.count('0'):
+                    return True
+                else:
+                    if s[0] != s[2]:
+                        return True
+                    else:
+                        return False
         else:
             return False
                     
@@ -642,16 +657,17 @@ desc = '''Filtering of polymorphisms according to genotypes, physical positions
 parser = argparse.ArgumentParser(description=desc)
 parser.add_argument('-v', action='version', version='%(prog)s 1.0.0')
 ### input
-parser.add_argument('-vcf', help='input vcf file', required=True, type=str)
+parser.add_argument('-vcf', '--vcf', help='input vcf file', required=True, type=str)
 ### filters
-parser.add_argument('-chr', help='filter by chromosome', type=str)
-parser.add_argument('-region', help='filter by region', type=str)
-parser.add_argument('-qual', help='filter by qual score', type=float)
-parser.add_argument('-filter', help='filter by filter flag', type=str)
-parser.add_argument('-genotype', help='filter by genotype', type=str,choices=["hom-ref", "hom-alt","het", "het-alt","not-hom-ref","not-two-alt","two-alt","not-het"])
+parser.add_argument('-chr', '--chr', help='filter by chromosome', type=str)
+parser.add_argument('-region', '--region', help='filter by region', type=str)
+parser.add_argument('--region-exclude', help='filter by region', type=str)
+parser.add_argument('-qual', '--qual', help='filter by qual score', type=float)
+parser.add_argument('-filter', '--filter', help='filter by filter flag', type=str)
+parser.add_argument('-genotype', '--genotype', help='filter by genotype', type=str,choices=["hom-ref", "hom-alt","het", "het-alt","not-hom-ref","not-two-alt","two-alt","not-het","not-hom-alt"])
 parser.add_argument('--keep-only-indels', help='keep only indels', action='store_true')
 parser.add_argument('--remove-indels', help='remove indels', action='store_true')
-parser.add_argument('-ids', help='filter by ID', type=str)
+parser.add_argument('-ids', '--ids', help='filter by ID', type=str)
 parser.add_argument('--ids-file', help='filter by ID', type=str)
 parser.add_argument('--phy-pos', help='filter by physical position', type=str)
 parser.add_argument('--phy-pos-file', help='filter by physical position', type=str)
@@ -659,23 +675,24 @@ parser.add_argument('--cmp-gtp-same', help='compare genotype of multiple individ
 parser.add_argument('--cmp-gtp-diff', help='compare genotype of multiple individuals', action='store_true')
 parser.add_argument('--min-alleles', help='minimum number of alleles', type=int)
 parser.add_argument('--max-alleles', help='maximum number of alleles', type=int)
-parser.add_argument('-info', help='filter by info keys', type=str)
+parser.add_argument('-info', '--info', help='filter by info keys', type=str)
 parser.add_argument('--comp-het', help='filter by compound heterozygous', action='store_true')
 parser.add_argument('--gene-key', help='key for gene annotation in INFO field', type = str)
 parser.add_argument('--func-key', help='key for function annotation in INFO field', type = str)
 parser.add_argument('--func-values', help='value for function annotation in INFO field', type = str)
 ### individual
-parser.add_argument('-ind', help='individual id', type=str)
+parser.add_argument('-ind', '--ind', help='individual id', type=str)
 ### missing value
 parser.add_argument('--missing-value', help='how to deal with missing values', default="keep", type=str, choices=["keep", "rm"])
 ### output
-parser.add_argument('-out', help='output vcf file', type=str, default='output.vcf')
+parser.add_argument('-out', '--out', help='output vcf file', type=str, default='output.vcf')
 #######################################################
 args = vars(parser.parse_args())
 INFILE = args['vcf']
 OUTFILE = args['out']
 CHR = args['chr'] if 'chr' in args else None
 REGION = args['region'] if 'region' in args else None
+REGIONEXCLUDE = args['region_exclude'] if 'region_exclude' in args else None
 QUAL = args['qual'] if 'qual' in args else None
 FILTER = args['filter'] if 'filter' in args else None
 GENOTYPE = args['genotype'] if 'genotype' in args else None
@@ -698,12 +715,12 @@ FUNCKEY = args['func_key'] if 'func_key' in args else None
 FUNCVALUES = args['func_values'] if 'func_values' in args else None
 #######################################################
 print "@-------------------------------------------------------------@"
-print "|       vcfFilter     |     v1.0.0      |    23 May 2016      |"
+print "|        vcfFilter      |      v1.1.0       |   24 May 2016   |"
 print "|-------------------------------------------------------------|"
 print "|  (C) 2016 Felix Yanhui Fan, GNU General Public License, v2  |"
 print "|-------------------------------------------------------------|"
 print "|    For documentation, citation & bug-report instructions:   |"
-print "|          http://felixfan.github.io/vcfFilter                |"
+print "|            http://felixfan.github.io/vcfFilter              |"
 print "@-------------------------------------------------------------@"
 print "\n\tOptions in effect:"
 print "\t-vcf", INFILE
@@ -711,6 +728,8 @@ if CHR:
     print "\t-chr", CHR
 elif REGION:
     print "\t-region", REGION
+elif REGIONEXCLUDE:
+    print "\t--region-exclude", REGIONEXCLUDE
 elif QUAL:
     print "\t-qual", QUAL
 elif FILTER:
@@ -781,15 +800,22 @@ print
 #######################################################
 if CHR:
     chrs = split_str_comma_dash(CHR)
-    print "keep chromosomes:", chrs
+    print "keep variants on chromosomes:", chrs
     filter_by_chr(INFILE,chrs, OUTFILE)
 elif REGION:
     tmp = REGION.split(':')
-    chr = tmp[0]
+    chrom = tmp[0]
     start = int(tmp[1].split('-')[0])
     end = int(tmp[1].split('-')[1])
-    print "keep region: %s, from %d to %d" % (chr, start, end)
-    filter_by_region(INFILE,chr,start,end,OUTFILE)
+    print "keep variants in region: from {} to {} on chromosome {}".format(start, end, chrom)
+    filter_by_region(INFILE,chrom,start,end,OUTFILE)
+elif REGIONEXCLUDE:
+    tmp = REGIONEXCLUDE.split(':')
+    chrom = tmp[0]
+    start = int(tmp[1].split('-')[0])
+    end = int(tmp[1].split('-')[1])
+    print "keep variants out of region: from {} to {} on chromosome {}".format(start, end, chrom)
+    filter_by_region(INFILE,chrom,start,end,OUTFILE, True)
 elif QUAL:
     cutoff = float(QUAL)
     print "keep variants with qual score no less than %f" % cutoff
@@ -802,17 +828,23 @@ elif GENOTYPE:
     print "genotype filter:"
     inds = split_str_comma(IND)
     if GENOTYPE == "hom-ref":
-        print "keep homozygous of reference allele of these individuals:"
+        print "keep variants that are homozygous of reference allele in these individuals:"
     elif GENOTYPE == "het":
-        print "keep heterozygous of these individuals:"
+        print "keep variants that are heterozygous in these individuals:"
     elif GENOTYPE == "hom-alt":
-        print "keep homozygous of alternative allele of these individuals:"
+        print "keep variants that have two same alternative allele in these individuals:"
     elif GENOTYPE == "not-hom-ref":
-        print "keep heterozygous AND homozygous of alternative allele of these individuals:"
+        print "keep variants that are not homozygous of reference allele in these individuals:"
     elif GENOTYPE == "not-two-alt":
-        print "keep heterozygous AND homozygous of reference allele of these individuals:"
+        print "keep variants that do not have two alternative alleles in these individuals:"
     elif GENOTYPE == "het-alt":
-        print "keep two different alternative alleles of these individuals:"
+        print "keep variants that have two different alternative alleles in these individuals:"
+    elif GENOTYPE == "two-alt":
+        print "keep variants that have two alternative alleles in these individuals:"
+    elif GENOTYPE == "not-hom-alt":
+        print "keep variants do not have two same alternative alleles in these individuals:"
+    elif GENOTYPE == "not-het":
+        print "keep variants are not heterozygous in these individuals:"
     print inds
     filter_by_genotype(INFILE, GENOTYPE, inds, NA, OUTFILE)
 elif INDEL:
@@ -868,12 +900,22 @@ elif CMPGTPDIFF:
         sys.exit('at least two individuals should be provided')
     cmp_gtp(INFILE, inds, NA, OUTFILE,False)
 elif MINALLELES and MAXALLELES:
+    if MINALLELES < 2:
+        sys.exit('value for --min-alleles should > 1')
+    if MAXALLELES < 2: 
+        sys.exit('value for --max-alleles should > 1')
+    if MAXALLELES < MINALLELES:
+        sys.exit('value for --max-alleles should >= value for --min-alleles')
     print "keep sites with minimum {} alleles and maximum {} alleles".format(MINALLELES, MAXALLELES)
     filter_num_alleles(INFILE, MINALLELES, MAXALLELES, OUTFILE)
 elif MINALLELES:
+    if MINALLELES < 2:
+        sys.exit('value for --min-alleles should > 1')
     print "keep sites with minimum {} alleles".format(MINALLELES)
     filter_num_alleles(INFILE, MINALLELES, MAXALLELES, OUTFILE)
 elif MAXALLELES:
+    if MAXALLELES < 2: 
+        sys.exit('value for --max-alleles should > 1')
     print "keep sites with maximum {} alleles".format(MAXALLELES)
     filter_num_alleles(INFILE, MINALLELES, MAXALLELES, OUTFILE)
 elif INFO:
