@@ -43,7 +43,11 @@ Table of Contents
 
 # 1 Introduction
 
+Filtering of variants according to genotypes and thresholds for the 8 fixed fields in VCF file.
+					
 # 2 Requirement and Installation
+
+`vcfFilter` uses Python 2 (Python 2.7 or higher) which is available [here](https://www.python.org/).
 
 # 3 Usage
 
@@ -73,6 +77,12 @@ Keep only the first 1 Mb (1-1,000,000) region on chromosome 1:
 
 ```
 python vcfFilter.py -vcf input.vcf -region chr1:1-1000000 -out output.vcf
+```
+
+Exclude the first 1 Mb (1-1,000,000) region on chromosome 1:
+
+```
+python vcfFilter.py -vcf input.vcf --region-exclude chr1:1-1000000 -out output.vcf
 ```
 
 ## 3.3 Filter by QUAL Score
@@ -112,14 +122,15 @@ Values for **-genotype**:
 
 value        | number of zero | A==B   | description 
 -------------|----------------|--------|--------------------------------
-hom-ref      | 2              | yes    | keep homozygous of refernce allele, two ref, e.g., 0/0
-hom-alt      | 0              | yes    | keep homozygous of alternative allele, two same alt e.g., 1/1
-het          | 1              | no     | keep heterozygous, one ref and one alt e.g., 0/1, or 0/2
-het-alt      | 0              | no     | keep individual has two copy of different alternative alleles, two different alt, e.g., 1/2
-not-hom-ref  | 0 or 1         | yes/no | keep individual does not have two copy of reference allele, one ref or no ref, e.g., 0/1 or 1/1 or 1/2
-not-two-alt  | 1 or 2         | yes/no | keep individual does not have two copy of alternative allele, at least one ref, e.g., 0/0, 0/1, 0/2
-two-alt      | 0              | yes/no | keep individual has two copy of alternative allele, two same or different alt, e.g., 1/1 or 1/2
-not-het      | 0 or 2         | yes/no | keep individual who is not heterozygous, hom-ref or two-alt, e.g. 0/0, 1/1, 1/2
+hom-ref      | 2              | yes    | keep variants that have two refernce allele, e.g., 0/0
+het          | 1              | no     | keep variants that have one reference and one alternative allele, e.g., 0/1, or 0/2
+hom-alt      | 0              | yes    | keep variants that have two same alternative allele, e.g., 1/1, 2/2
+het-alt      | 0              | no     | keep variants that have two different alternative allele, e.g., 1/2, 1/3
+two-alt      | 0              | yes/no | keep variants that have two copy of alternative allele, e.g., 1/1 or 1/2
+not-hom-ref  | 0 or 1         | yes/no | keep variants that does not have two copy of reference allele, e.g., 0/1 or 1/1 or 1/2
+not-het      | 0 or 2         | yes/no | keep variants that are hom-ref or two-alt, e.g., 0/0, 1/1, 1/2
+not-hom-alt  | 0 or 1 or 2    | no/yes | keep variants that are not hom-alt, e.g., 0/0, 0/1, 1/2 
+not-two-alt  | 1 or 2         | yes/no | keep variants that does not have two alternative alleles, e.g., 0/0, 0/1, 0/2
 
 The allele values are 0 for the reference allele, 1 for the first allele listed in ALT, 2 for the second allele list in ALT and so on. For diploid calls examples could be 0/1 (A=0 and B=1, number of zero is 1).   
 
@@ -239,6 +250,8 @@ Genotype comparisions:
 001 cmp 004
 ```
 
+**Note**: in the above example, there is no comparision between genotype of 003 and 004.
+
 ## 3.10 Filter by number of alleles
 
 ### 3.10.1 minimum number of alleles
@@ -346,7 +359,7 @@ python vcfFilter.py -vcf input.vcf --comp-het --gene-key Gene_refGene
 - precedence of function values listed above are in decreased orders       
 - generally, you do not add 'intergenic' to `--func-values`      
 
-    
+
 # 4 References
 
 * [VCF (Variant Call Format) version 4.0](http://www.1000genomes.org/wiki/Analysis/vcf4.0)
