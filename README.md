@@ -278,7 +278,7 @@ Genotype comparisions:
 Only sites have alleles no less than (`>=`) the minimum number will be kept.
 
 ```
-python vcfFilter.py -vcf input.vcf --min-alleles 2 -out output.vcf
+python vcfFilter.py --vcf input.vcf --min-alleles 2 --out output.vcf
 ```
 
 ### 3.10.2 maximum number of alleles
@@ -286,7 +286,7 @@ python vcfFilter.py -vcf input.vcf --min-alleles 2 -out output.vcf
 Only sites have alleles no more than (`<=`) the maximum number will be kept.
 
 ```
-python vcfFilter.py -vcf input.vcf --max-alleles 2 -out output.vcf
+python vcfFilter.py --vcf input.vcf --max-alleles 2 --out output.vcf
 ```
 
 ### 3.10.3 filter biallelic site
@@ -294,7 +294,7 @@ python vcfFilter.py -vcf input.vcf --max-alleles 2 -out output.vcf
 A biallelic site is a specific locus in a genome that contains two observed alleles, counting the reference as one, and therefore allowing for one variant allele.
 
 ```
-python vcfFilter.py -vcf input.vcf --min-alleles 2 --max-alleles 2 -out output.vcf
+python vcfFilter.py --vcf input.vcf --min-alleles 2 --max-alleles 2 --out output.vcf
 ```
 
 ### 3.10.4 filter multiallelic site
@@ -302,7 +302,7 @@ python vcfFilter.py -vcf input.vcf --min-alleles 2 --max-alleles 2 -out output.v
 A multiallelic site is a specific locus in a genome that contains three or more observed alleles, again counting the reference as one, and therefore allowing for two or more variant alleles.
 
 ```
-python vcfFilter.py -vcf input.vcf --min-alleles 3 -out output.vcf
+python vcfFilter.py --vcf input.vcf --min-alleles 3 --out output.vcf
 ```
 
 ## 3.11 Filter by INFO
@@ -319,16 +319,16 @@ When [annovar](http://annovar.openbioinformatics.org/en/latest/) was used to ann
 
 commands format for numeric value (only one value):
 ```
--info '<key>>=<value>'
--info '<key><=<value>'
--info '<key>><value>'
--info '<key><<value>'
+--info '<key>>=<value>'
+--info '<key><=<value>'
+--info '<key>><value>'
+--info '<key><<value>'
 ```
 commands format for numeric value or string type value (one value or multiple values seperated by ','):
 
 ```
--info '<key>=<value>[,value]'
--info '<key>!=<value>[,value]'
+--info '<key>=<value>[,value]'
+--info '<key>!=<value>[,value]'
 ```
 
 - Whick `key` can be used depends on your own vcf. 
