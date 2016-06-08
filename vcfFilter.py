@@ -731,7 +731,37 @@ def filter_by_indid(infile, indids,outfile, exclude=False):
     print "{} variants of {} individuals were written to {}".format(n, m, outfile)
     fw.close()
     fr.close()       
-  
+def filter_missing(infile, cutoff, outfile, count=False):
+    '''
+    filter by missing rate / count
+    '''
+    fr = open(infile)
+    fw = open(outfile, 'w')
+    n = 0
+    m = 0
+    for r in fr:
+        r = r.strip()
+        if r.startswith("#"):
+            fw.write("%s\n" % r)
+        else:
+            n += 1
+            arr = r.split()
+            nind = len(arr) - 9
+            mind = 0
+            for z in arr[9:]:
+                if z == '.':
+                    mind += 1
+            if not count:
+                if 1.0*mind/nind <= cutoff:
+                    fw.write("%s\n" % r)
+                    m += 1
+            else:
+                if mind <= cutoff:
+                    fw.write("%s\n" % r)
+                    m += 1
+    print "%d of %d variants were written to %s" % (m, n, outfile)
+    fw.close()
+    fr.close()
 #######################################################
 strattime = time.time()
 #######################################################
@@ -765,6 +795,8 @@ parser.add_argument('--func-key', help='key for function annotation in INFO fiel
 parser.add_argument('--func-values', help='value for function annotation in INFO field', type = str)
 parser.add_argument('--keep-inds', help='filter by individual id', action='store_true')
 parser.add_argument('--remove-inds', help='filter by individual id', action='store_true')
+parser.add_argument('--missing-rate', help='filter by missing rate', type=str)
+parser.add_argument('--missing-count', help='filter by missing count', type=str)
 ### individual
 parser.add_argument('--ind', help='individual id', type=str)
 ### missing value
@@ -802,6 +834,8 @@ FUNCKEY = args['func_key'] if 'func_key' in args else None
 FUNCVALUES = args['func_values'] if 'func_values' in args else None
 KEEPINDS = args['keep_inds'] if 'keep_inds' in args else False
 REMOVEINDS = args['remove_inds'] if 'remove_inds' in args else False
+MISSRATE= args['missing_rate'] if 'missing_rate' in args else None
+MISSCOUNT = args['missing_count'] if 'missing_count' in args else None
 #######################################################
 print "@-------------------------------------------------------------@"
 print "|        vcfFilter      |      v1.2.0       |   08 Jun 2016   |"
@@ -809,7 +843,7 @@ print "|-------------------------------------------------------------|"
 print "|  (C) 2016 Felix Yanhui Fan, GNU General Public License, v2  |"
 print "|-------------------------------------------------------------|"
 print "|    For documentation, citation & bug-report instructions:   |"
-print "|            http://felixfan.github.io/vcfFilter              |"
+print "|            http://felixfan.github.io/PyVCF                  |"
 print "@-------------------------------------------------------------@"
 print "\n\tOptions in effect:"
 print "\t--vcf", INFILE
@@ -907,6 +941,10 @@ elif REMOVEINDS:
         print "\t--ind", IND
     else:
         sys.exit("Error, argment --ind is missing!")
+elif MISSRATE:
+    print "\t--missing-rate", MISSRATE
+elif MISSCOUNT:
+    print "\t--missing-count", MISSCOUNT
 print "\t--out", OUTFILE
 print
 #######################################################
@@ -1107,6 +1145,20 @@ elif KEEPINDS:
 elif REMOVEINDS:
     inds = split_str_comma(IND)
     filter_by_indid(INFILE, inds,OUTFILE, True)
+elif MISSRATE:
+    MISSRATE = float(MISSRATE)
+    if 1 >= MISSRATE >= 0:
+        print "exclude sites with proportion of missing data is larger than {}".format(MISSRATE)
+        filter_missing(INFILE, MISSRATE, OUTFILE)
+    else:
+        sys.exit('missing rate should be between 0 and 1')
+elif MISSCOUNT:
+    MISSCOUNT = int(MISSCOUNT)
+    if MISSCOUNT > 0:
+        print "exclude sites with more than {} missing genotypes over all ndividuals".format(MISSCOUNT)
+        filter_missing(INFILE, MISSCOUNT, OUTFILE, True)
+    else:
+        sys.exit('missing count should be a positive int')
 else:
     sys.exit('do nothing!')
 ###############################################################################
