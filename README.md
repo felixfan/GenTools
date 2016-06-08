@@ -1,15 +1,16 @@
-# vcfFilter - Python tool for handling VCF files.
+# PyVCF - Python tools for handling VCF files.
 
 Table of Contents
 =================
 
   * [1 Introduction](#1-introduction)
   * [2 Requirement and Installation](#2-requirement-and-installation)
-  * [3 Usage](#3-usage)
+  * [3 vcfFilter](#3-vcffilter)
     * [3\.1 Filter by Chromosome](#31-filter-by-chromosome)
       * [3\.1\.1 Keep all autosomes (separated by "\-")](#311-keep-all-autosomes-separated-by--)
       * [3\.1\.2 Keep chromosomes (separated by ",")](#312-keep-chromosomes-separated-by-)
       * [3\.1\.3 Keep chromosomes (separated by "," and "\-")](#313-keep-chromosomes-separated-by--and--)
+      * [3\.1\.4 Exclude chromosomes](#314-exclude-chromosomes)
     * [3\.2 Filter by Region](#32-filter-by-region)
     * [3\.3 Filter by QUAL Score](#33-filter-by-qual-score)
     * [3\.4 Filter by Filter Flag](#34-filter-by-filter-flag)
@@ -22,6 +23,7 @@ Table of Contents
     * [3\.7 Filter by ID](#37-filter-by-id)
       * [3\.7\.1 IDs were seperated by ','](#371-ids-were-seperated-by-)
       * [3\.7\.2 IDs were stored in a file](#372-ids-were-stored-in-a-file)
+      * [3\.7\.3 Remove variants by IDs\.](#373-remove-variants-by-ids)
     * [3\.8 Filter by Physical Positions](#38-filter-by-physical-positions)
       * [3\.8\.1 Physical positions were seperated by ','](#381-physical-positions-were-seperated-by-)
       * [3\.8\.2 Physical Positions were stored in a file](#382-physical-positions-were-stored-in-a-file)
@@ -38,37 +40,52 @@ Table of Contents
       * [3\.11\.2 examples](#3112-examples)
         * [3\.11\.2\.1 remove variants located in the intergenic, downstream or upstream region](#31121-remove-variants-located-in-the-intergenic-downstream-or-upstream-region)
         * [3\.11\.2\.2 remove variants wilth allele frequency in 1000 genomes higher than 0\.05](#31122-remove-variants-wilth-allele-frequency-in-1000-genomes-higher-than-005)
+        * [3\.11\.2\.3 remove variants wilth alternatice allele frequency higher than 0\.05](#31123-remove-variants-wilth-alternatice-allele-frequency-higher-than-005)
+        * [3\.11\.2\.4 remove variants if the combined depth across samples is less than 200](#31124-remove-variants-if-the-combined-depth-across-samples-is-less-than-200)
+        * [3\.11\.2\.5 remove variants if the RMS mapping quality is less than 50](#31125-remove-variants-if-the-rms-mapping-quality-is-less-than-50)
     * [3\.12 Filter compound heterozygous](#312-filter-compound-heterozygous)
   * [4 References](#4-references)
 
 # 1 Introduction
 
-Filtering of variants according to genotypes and thresholds for the 8 fixed fields in VCF file.
+Python tools for handling VCF files.
+
+* vcfFilter.py: Filtering of variants according to genotypes and thresholds for the 8 fixed fields in VCF file.
 					
 # 2 Requirement and Installation
 
-`vcfFilter` uses Python 2 (Python 2.7 or higher) which is available [here](https://www.python.org/).
+`PyVCF` uses Python 2 (Python 2.7 or higher) which is available [here](https://www.python.org/).
 
-# 3 Usage
+# 3 vcfFilter
+
+Filtering of variants according to genotypes and thresholds for the 8 fixed fields in VCF file.
 
 ## 3.1 Filter by Chromosome
 
 ### 3.1.1 Keep all autosomes (separated by "-")
 
 ```
-python vcfFilter.py -vcf input.vcf -chr chr1-chr22 -out output.vcf
+python vcfFilter.py --vcf input.vcf --chr chr1-chr22 --out output.vcf
 ```
 
 ### 3.1.2 Keep chromosomes (separated by ",")
 
 ```
-python vcfFilter.py -vcf input.vcf -chr chr1,chr3 -out output.vcf
+python vcfFilter.py --vcf input.vcf --chr chr1,chr3 --out output.vcf
 ```
 
 ### 3.1.3 Keep chromosomes (separated by "," and "-")
 
 ```
-python vcfFilter.py -vcf input.vcf -chr chr1-chr3,chr6 -out output.vcf
+python vcfFilter.py --vcf input.vcf --chr chr1-chr3,chr6 --out output.vcf
+```
+
+### 3.1.4 Exclude chromosomes
+
+use `--reverse` to reverse the filter. e.g., exclude chr3 and chr6
+
+```
+python vcfFilter.py --vcf input.vcf --chr chr1-chr3,chr6 --reverse --out output.vcf
 ```
 
 ## 3.2 Filter by Region
@@ -76,13 +93,13 @@ python vcfFilter.py -vcf input.vcf -chr chr1-chr3,chr6 -out output.vcf
 Keep only the first 1 Mb (1-1,000,000) region on chromosome 1:  
 
 ```
-python vcfFilter.py -vcf input.vcf -region chr1:1-1000000 -out output.vcf
+python vcfFilter.py --vcf input.vcf --region chr1:1-1000000 --out output.vcf
 ```
 
 Exclude the first 1 Mb (1-1,000,000) region on chromosome 1:
 
 ```
-python vcfFilter.py -vcf input.vcf --region-exclude chr1:1-1000000 -out output.vcf
+python vcfFilter.py --vcf input.vcf --region chr1:1-1000000 --reverse -out output.vcf
 ```
 
 ## 3.3 Filter by QUAL Score
@@ -90,7 +107,7 @@ python vcfFilter.py -vcf input.vcf --region-exclude chr1:1-1000000 -out output.v
 Keep variants with phred-scaled quality score no less than 30:  
 
 ```
-python vcfFilter.py -vcf input.vcf -qual 30 -out output.vcf
+python vcfFilter.py --vcf input.vcf --qual 30 --out output.vcf
 ```
 
 ## 3.4 Filter by Filter Flag
@@ -98,15 +115,13 @@ python vcfFilter.py -vcf input.vcf -qual 30 -out output.vcf
 ### 3.4.1 Keep variants with FILTER flag: "PASS"
 
 ```
-python vcfFilter.py -vcf input.vcf -filter PASS -out output.vcf
+python vcfFilter.py --vcf input.vcf --filter PASS --out output.vcf
 ```
 
 ### 3.4.2 Keep variants with FILTER flags (separated by ",")
 
 ```
-python vcfFilter.py -vcf input.vcf -filter PASS,VQSRTrancheINDEL99.00to99.90,
-VQSRTrancheINDEL99.90to100.00,VQSRTrancheSNP99.00to99.90,
-VQSRTrancheSNP99.90to100.00 -out output.vcf
+python vcfFilter.py --vcf input.vcf --filter PASS,VQSRTrancheINDEL99.00to99.90,VQSRTrancheINDEL99.90to100.00,VQSRTrancheSNP99.00to99.90,VQSRTrancheSNP99.90to100.00 --out output.vcf
 ```
 
 ## 3.5 Filter by Genotype fields
@@ -114,11 +129,10 @@ VQSRTrancheSNP99.90to100.00 -out output.vcf
 Keep homozygous of reference alleles in sample 001 and sample 002:  
 
 ```
-python vcfFilter.py -vcf input.vcf -genotype hom-ref -ind 001,002 
-  --missing-value keep -out output.vcf
+python vcfFilter.py --vcf input.vcf --genotype hom-ref --ind 001,002 --missing-value keep --out output.vcf
 ```
 
-Values for **-genotype**:
+Values for **--genotype**:
 
 value        | number of zero | A==B   | description 
 -------------|----------------|--------|--------------------------------
@@ -134,7 +148,7 @@ not-two-alt  | 1 or 2         | yes/no | keep variants that does not have two al
 
 The allele values are 0 for the reference allele, 1 for the first allele listed in ALT, 2 for the second allele list in ALT and so on. For diploid calls examples could be 0/1 (A=0 and B=1, number of zero is 1).   
 
-value of **-ind** is a string of individual IDs separated by ",". e.g., "-ind 1", "-ind 1,2,3"
+value of **--ind** is a string of individual IDs separated by ",". e.g., "--ind 1", "--ind 1,2,3"
 
 **Note**: individual IDs must be in the header line of the input VCF file.
 
@@ -153,13 +167,13 @@ site   REF                ALT
 ### 3.6.1 keep only sites that contain an indel
 
 ```
-python vcfFilter.py -vcf input.vcf --keep-only-indels -out output.vcf
+python vcfFilter.py --vcf input.vcf --keep-only-indels --out output.vcf
 ```
 
 ### 3.6.2 exclude sites that contain an indel
 
 ```
-python vcfFilter.py -vcf input.vcf --remove-indels -out output.vcf
+python vcfFilter.py --vcf input.vcf --remove-indels --out output.vcf
 ```
 
 ## 3.7 Filter by ID
@@ -169,11 +183,11 @@ python vcfFilter.py -vcf input.vcf --remove-indels -out output.vcf
 Multiple IDs (e.g. dbSNP rsID) can be seperated using ",". 
 
 ```
-python vcfFilter.py -vcf input.vcf -ids rs1234 -out output.vcf
+python vcfFilter.py --vcf input.vcf --ids rs1234 --out output.vcf
 ```
 
 ```
-python vcfFilter.py -vcf input.vcf -ids rs1234,rs1235 -out output.vcf
+python vcfFilter.py --vcf input.vcf --ids rs1234,rs1235 --out output.vcf
 ```
 
 ### 3.7.2 IDs were stored in a file
@@ -186,7 +200,15 @@ rs1235
 ```
 
 ```
-python vcfFilter.py -vcf input.vcf --ids-file ids.txt -out output.vcf
+python vcfFilter.py --vcf input.vcf --ids-file ids.txt --out output.vcf
+```
+
+### 3.7.3 Remove variants by IDs.
+
+use `--reverse` to reverse the filter.
+
+```
+python vcfFilter.py --vcf input.vcf --ids rs1234,rs1235 --reverse --out output.vcf
 ```
 
 ## 3.8 Filter by Physical Positions
@@ -196,11 +218,11 @@ python vcfFilter.py -vcf input.vcf --ids-file ids.txt -out output.vcf
 Physical positions can be seperated using ",". Each physical position includes chromosome and position that was seperated by ":".
 
 ```
-python vcfFilter.py -vcf input.vcf --phy-pos chr1:1234567, -out output.vcf
+python vcfFilter.py --vcf input.vcf --phy-pos chr1:1234567, --out output.vcf
 ```
 
 ```
-python vcfFilter.py -vcf input.vcf --phy-pos chr1:1234567,chr2:9887234 -out output.vcf
+python vcfFilter.py --vcf input.vcf --phy-pos chr1:1234567,chr2:9887234 --out output.vcf
 ```
 
 ### 3.8.2 Physical Positions were stored in a file
@@ -213,7 +235,7 @@ chr2  9887234
 ```
 
 ```
-python vcfFilter.py -vcf input.vcf --phy-pos-file phypos.txt -out output.vcf
+python vcfFilter.py --vcf input.vcf --phy-pos-file phypos.txt --out output.vcf
 ```
 
 ## 3.9 Compare genotype of multiple individuals
@@ -223,8 +245,7 @@ python vcfFilter.py -vcf input.vcf --phy-pos-file phypos.txt -out output.vcf
 e.g., Only variants have the same genotype in individual `001` and `003` is kept.
 
 ```
-python vcfFilter.py -vcf input.vcf --cmp-gtp-same -ind 001,003 
-  --missing-value keep -out output.vcf
+python vcfFilter.py --vcf input.vcf --cmp-gtp-same --ind 001,003 --missing-value keep --out output.vcf
 ```
 
 ### 3.9.2 Only variants have different genotype between the first individual and others will be kept
@@ -232,15 +253,13 @@ python vcfFilter.py -vcf input.vcf --cmp-gtp-same -ind 001,003
 e.g., Only variants have the different genotype between individual `001` and `003` will be kept.
 
 ```
-python vcfFilter.py -vcf input.vcf --cmp-gtp-diff -ind 001,003 
-  --missing-value keep -out output.vcf
+python vcfFilter.py --vcf input.vcf --cmp-gtp-diff --ind 001,003 --missing-value keep --out output.vcf
 ```
 
 e.g., Only variants have the different genotype between individual `001` and `003` and `004` will be kept.
 
 ```
-python vcfFilter.py -vcf input.vcf --cmp-gtp-diff -ind 001,003,004 
-  --missing-value keep -out output.vcf
+python vcfFilter.py --vcf input.vcf --cmp-gtp-diff --ind 001,003,004 --missing-value keep --out output.vcf
 ```
 
 Genotype comparisions:
@@ -325,32 +344,49 @@ The following two examples show how it works. Please be noted that annovar was u
 #### 3.11.2.1 remove variants located in the intergenic, downstream or upstream region
 
 ```
-python vcfFilter.py -vcf input.vcf -out output.vcf
-  -info 'Func_refGene!=intergenic,downstream,upstream' 
+python vcfFilter.py --vcf input.vcf --out output.vcf --info 'Func_refGene!=intergenic,downstream,upstream' 
 ```
 
 By default, missing value will be kept, chang this by adding `--missing-value rm`
+
 ```
-python vcfFilter.py -vcf input.vcf -out output.vcf
-  -info 'Func_refGene!=intergenic,downstream,upstream' --missing-value rm
+python vcfFilter.py --vcf input.vcf --out output.vcf --info 'Func_refGene!=intergenic,downstream,upstream' --missing-value rm
 ```
 
 #### 3.11.2.2 remove variants wilth allele frequency in 1000 genomes higher than 0.05
 
 ```
-python vcfFilter.py -vcf input.vcf -info '1000g2015aug_all<=0.05' --missing-value keep -out output.vcf
+python vcfFilter.py --vcf input.vcf --info '1000g2015aug_all<=0.05' --missing-value keep --out output.vcf
+```
+
+#### 3.11.2.3 remove variants wilth alternatice allele frequency higher than 0.05
+
+```
+python vcfFilter.py --vcf input.vcf --info 'AF<=0.05' --out output.vcf
+```
+
+Note: Currently, this only works for variants with only one alternative allele.   
+
+#### 3.11.2.4 remove variants if the combined depth across samples is less than 200 
+
+```
+python vcfFilter.py --vcf input.vcf --info 'DP>=200' --out output.vcf
+```
+
+#### 3.11.2.5 remove variants if the RMS mapping quality is less than 50
+
+```
+python vcfFilter.py --vcf input.vcf --info 'MQ>=50' --out output.vcf
 ```
 
 ## 3.12 Filter compound heterozygous
 
-Find all heterozygous variant pairs. We need perform the gene-based annotation first, suppose we have performed the [ANNOVAR](http://annovar.openbioinformatics.org/en/latest/user-guide/gene) `refGene` based annotation. The key in the INFO field for gene name is `Gene_refGene`. The key in the INFO field for function is `Func_refGene` and values for function are: `exonic`, `splicing`, `ncRNA_exonic`, `ncRNA_intronic`, `UTR5`, `UTR3`, `intronic`, `upstream`, `downstream`, `intergenic`.
+Find all heterozygous variant pairs in a gene. We need perform the gene-based annotation first, suppose we have performed the [ANNOVAR](http://annovar.openbioinformatics.org/en/latest/user-guide/gene) `refGene` based annotation. The key in the INFO field for gene name is `Gene_refGene`. The key in the INFO field for function is `Func_refGene` and values for function are: `exonic`, `splicing`, `ncRNA_exonic`, `ncRNA_intronic`, `UTR5`, `UTR3`, `intronic`, `upstream`, `downstream`, `intergenic`.
 
 e.g. find all variant pairs that individual 001 and 002 have two heterozygous while other individuals only have one or zero heterozygous. Only variants in exonic, splicing and ncRNA_exonic region were considered.
 
 ```
-python vcfFilter.py -vcf input.vcf --comp-het --gene-key Gene_refGene
-  --func-key Func_refGene --func-values 'exonic,splicing,ncRNA_exonic' 
-  -ind '001,002' -out output.vcf
+python vcfFilter.py --vcf input.vcf --comp-het --gene-key Gene_refGene --func-key Func_refGene --func-values 'exonic,splicing,ncRNA_exonic' --ind '001,002' --out output.vcf
 ```
 
 **Note:**  
@@ -359,11 +395,9 @@ python vcfFilter.py -vcf input.vcf --comp-het --gene-key Gene_refGene
 - precedence of function values listed above are in decreased orders       
 - generally, you do not add 'intergenic' to `--func-values`      
 
-
 # 4 References
 
 * [VCF (Variant Call Format) version 4.0](http://www.1000genomes.org/wiki/Analysis/vcf4.0)
 * [VCF (Variant Call Format) version 4.1](http://samtools.github.io/hts-specs/VCFv4.1.pdf)
 * [VCF (Variant Call Format) version 4.2](http://samtools.github.io/hts-specs/VCFv4.2.pdf)
 * [VCF (Variant Call Format) version 4.3](http://samtools.github.io/hts-specs/VCFv4.3.pdf)
-
