@@ -680,6 +680,58 @@ def filter_comp_het(infile, inds, geneKey, funcKey, funcValues, outfile):
     filter_by_phypos(infile, pp, outfile)
     extract_genotype(infile, pp, outfile+'.gtp.txt')
 
+def filter_by_indid(infile, indids,outfile, exclude=False):
+    '''
+    filter by individual ID
+    '''
+    fr = open(infile)
+    fw = open(outfile, 'w')
+    n = 0 # total sites
+    m = 0 
+    pidx = [0,1,2,3,4,5,6,7,8] # first 9 cols
+    inds = []
+    for r in fr:
+        r = r.strip()
+        if r.startswith("##"):
+            fw.write("%s\n" % r)
+        elif r.startswith("#"):
+            myind = r.split()
+            print "there are {} individuals in {}\nthey are: {}".format(len(myind[9:]), infile, myind[9:])
+            if not exclude:
+                for x in indids:
+                    if x in myind:
+                        idx = myind.index(x)
+                        pidx.append(idx)
+                        m += 1
+                        inds.append(x)
+                    else:
+                        sys.exit('Error: {} is not in {}'.format(x, infile))
+            else:
+                for x in myind[9:]:
+                    if not x in indids:
+                        idx = myind.index(x)
+                        pidx.append(idx)
+                        m += 1
+                        inds.append(x)
+            if m > 0:
+                print 'keep these individuals: {}'.format(inds)
+            else:
+                sys.exit('No individual left')
+            fw.write(myind[0])
+            for i in pidx[1:]:
+                fw.write('\t{}'.format(myind[i]))
+            fw.write('\n')
+        else:
+            arr = r.split()
+            n += 1
+            fw.write(arr[0])
+            for i in pidx[1:]:
+                fw.write('\t{}'.format(arr[i]))
+            fw.write('\n')
+    print "{} variants of {} individuals were written to {}".format(n, m, outfile)
+    fw.close()
+    fr.close()       
+  
 #######################################################
 strattime = time.time()
 #######################################################
@@ -711,6 +763,8 @@ parser.add_argument('--comp-het', help='filter by compound heterozygous', action
 parser.add_argument('--gene-key', help='key for gene annotation in INFO field', type = str)
 parser.add_argument('--func-key', help='key for function annotation in INFO field', type = str)
 parser.add_argument('--func-values', help='value for function annotation in INFO field', type = str)
+parser.add_argument('--keep-inds', help='filter by individual id', action='store_true')
+parser.add_argument('--remove-inds', help='filter by individual id', action='store_true')
 ### individual
 parser.add_argument('--ind', help='individual id', type=str)
 ### missing value
@@ -746,6 +800,8 @@ COMPHET = args['comp_het'] if 'comp_het' in args else None
 GENEKEY = args['gene_key'] if 'gene_key' in args else None
 FUNCKEY = args['func_key'] if 'func_key' in args else None
 FUNCVALUES = args['func_values'] if 'func_values' in args else None
+KEEPINDS = args['keep_inds'] if 'keep_inds' in args else False
+REMOVEINDS = args['remove_inds'] if 'remove_inds' in args else False
 #######################################################
 print "@-------------------------------------------------------------@"
 print "|        vcfFilter      |      v1.2.0       |   08 Jun 2016   |"
@@ -838,7 +894,19 @@ elif COMPHET:
     if FUNCVALUES:
         print "\t--func-values", FUNCVALUES
     else:
-        sys.exit("Error, argment --func-values is missing!")    
+        sys.exit("Error, argment --func-values is missing!")
+elif KEEPINDS:
+    print "\t--keep-inds"
+    if IND:
+        print "\t--ind", IND
+    else:
+        sys.exit("Error, argment --ind is missing!")
+elif REMOVEINDS:
+    print "\t--remove-inds"
+    if IND:
+        print "\t--ind", IND
+    else:
+        sys.exit("Error, argment --ind is missing!")
 print "\t--out", OUTFILE
 print
 #######################################################
@@ -1033,6 +1101,12 @@ elif COMPHET:
     print "filter by compound hetrozygous"
     print "find compound hetrozygous in these individuals: {}".format(inds)
     filter_comp_het(INFILE, inds, GENEKEY, FUNCKEY, funcValues, OUTFILE)
+elif KEEPINDS:
+    inds = split_str_comma(IND)
+    filter_by_indid(INFILE, inds,OUTFILE)
+elif REMOVEINDS:
+    inds = split_str_comma(IND)
+    filter_by_indid(INFILE, inds,OUTFILE, True)
 else:
     sys.exit('do nothing!')
 ###############################################################################
