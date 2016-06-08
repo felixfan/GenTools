@@ -59,7 +59,7 @@ def split_str_comma_dash(CHR):
                 chrs.extend(split_str_dash(it))
     return chrs
   
-def filter_by_chr(infile, chrs,outfile):
+def filter_by_chr(infile, chrs,outfile, exclude=False):
     '''
     filter by chromosome
     ''' 
@@ -74,13 +74,18 @@ def filter_by_chr(infile, chrs,outfile):
         else:
             arr = r.split()
             n += 1
-            if arr[0] in chrs:
-                fw.write("%s\n" % r)
-                m += 1
+            if not exclude:
+                if arr[0] in chrs:
+                    fw.write("%s\n" % r)
+                    m += 1
+            else:
+                if not arr[0] in chrs:
+                    fw.write("%s\n" % r)
+                    m += 1
     print "%d of %d variants were written to %s" % (m, n, outfile)
     fw.close()
     fr.close()
-    
+
 def filter_by_region(infile, chrom, start, end, outfile, exclude=False):
     '''
     filter by region
@@ -109,7 +114,7 @@ def filter_by_region(infile, chrom, start, end, outfile, exclude=False):
     print "%d of %d variants were written to %s" % (m, n, outfile)
     fw.close()
     fr.close()
-    
+
 def filter_by_qual(infile, cutoff, outfile):
     '''
     filter by qual >= cutoff
@@ -229,6 +234,10 @@ def filter_by_genotype(infile, gtp, inds, na, outfile):
         elif r.startswith("#"):
             fw.write("%s\n" % r)
             myind = r.split()
+            print 'individual ids in vcf are:', myind[9:]
+            for z in inds:
+                if not z in myind[9:]:
+                    sys.exit('Error: {} is not in the input vcf file!'.format(z))
         else:
             arr = r.split()
             n += 1
@@ -292,9 +301,10 @@ def filter_indels(infile, b, outfile):
     print "%d of %d variants were written to %s" % (m, n, outfile)
     fw.close()
     fr.close()
-def filter_by_var_ids(infile, ids, outfile):
+
+def filter_by_var_ids(infile, ids, outfile, exclude=False):
     '''
-    keep variants in ids
+    filter variants in ids
     '''
     fr = open(infile)
     fw = open(outfile, 'w')
@@ -307,15 +317,21 @@ def filter_by_var_ids(infile, ids, outfile):
         else:
             arr = r.split()
             n += 1
-            if arr[2] in ids:
-                fw.write("%s\n" % r)
-                m += 1 # do NOT rm ID that already print out, since there are more variant's ID were '.'
+            if not exclude:
+                if arr[2] in ids:
+                    fw.write("%s\n" % r)
+                    m += 1
+            else:
+                if not arr[2] in ids:
+                    fw.write("%s\n" % r)
+                    m += 1
     print "%d of %d variants were written to %s" % (m, n, outfile)
     fw.close()
     fr.close()
-def filter_by_phypos(infile, pp, outfile):
+
+def filter_by_phypos(infile, pp, outfile, exclude=False):
     '''
-    keep variants by physical positions
+    filter variants by physical positions
     '''
     fr = open(infile)
     fw = open(outfile, 'w')
@@ -329,13 +345,18 @@ def filter_by_phypos(infile, pp, outfile):
             arr = r.split()
             n += 1
             tmp = arr[0] + ":" + arr[1]
-            if tmp in pp:
-                fw.write("%s\n" % r)
-                m += 1
-                # pp.remove(tmp) # rm variants that already print out
+            if not exclude:
+                if tmp in pp:
+                    fw.write("%s\n" % r)
+                    m += 1
+            else:
+                if not tmp in pp:
+                    fw.write("%s\n" % r)
+                    m += 1        
     print "%d of %d variants were written to %s" % (m, n, outfile)
     fw.close()
     fr.close()
+
 def cmp_gtp(infile, inds, na, outfile,same):
     '''
     compare genotype of multiple individuals
@@ -356,13 +377,13 @@ def cmp_gtp(infile, inds, na, outfile,same):
             if inds[0] in myind:
                 idx0 = myind.index(inds[0])
             else:
-                sys.exit('%s is not in %s' % (inds[0], infile))
+                sys.exit('Error: %s is not in %s' % (inds[0], infile))
             for x in inds[1:]:
                 if x in myind:
                     tmp = myind.index(x)
                     idx.append(tmp)
                 else:
-                    sys.exit('%s is not in %s' % (x, infile))
+                    sys.exit('Error: %s is not in %s' % (x, infile))
         else:
             arr = r.split()
             n += 1
@@ -403,6 +424,7 @@ def cmp_gtp(infile, inds, na, outfile,same):
     print "%d of %d variants were written to %s" % (m, n, outfile)
     fw.close()
     fr.close()
+
 def filter_num_alleles(infile, minc, maxc, outfile):
     '''
     filter by num of alleles
@@ -423,10 +445,10 @@ def filter_num_alleles(infile, minc, maxc, outfile):
                 if maxc >= num >= minc:
                     fw.write("%s\n" % r)
                     m += 1
-                elif minc:
-                    if num >= minc:
-                        fw.write("%s\n" % r)
-                        m += 1
+            elif minc:
+                if num >= minc:
+                    fw.write("%s\n" % r)
+                    m += 1
             elif maxc:
                 if num <= maxc:
                     fw.write("%s\n" % r)
@@ -436,90 +458,93 @@ def filter_num_alleles(infile, minc, maxc, outfile):
     print "%d of %d variants were written to %s" % (m, n, outfile)
     fw.close()
     fr.close()
+
 def filter_by_info(infile, outfile,key,operation,values,na,stype='float'):
-	'''
-	filter by info
-	'''
-	fr = open(infile)
-	fw = open(outfile, 'w')
-	n = 0
-	m = 0
-	for r in fr:
-		r = r.strip()
-		if r.startswith("#"):
-			fw.write("%s\n" % r)
-		else:
-			arr = r.split()
-			n += 1
-			ar = arr[7].split(';')
-			flag = False # whether key is in info
-			for z in ar:
-				if z.startswith(key):
-					flag = True
-					a = z.split('=')
-					fla = True # keep site
-					if a[1] == '.': # missing value
-						if na == 'keep':
-							fla = True
-						else:
-							fla = False
-					else: # non-missing value
-						bs = a[1].split(',') # multiple value
-						if operation == ">=":
-							for b in bs:
-								if float(b) < values[0]:
-									fla = False
-									break
-						elif operation == "<=":
-							for b in bs:
-								if float(b) > values[0]:
-									fla = False
-									break
-						elif operation == "<":
-							for b in bs:
-								if float(b) >= values[0]:
-									fla = False
-									break
-						elif operation == ">":
-							for b in bs:
-								if float(b) <= values[0]:
-									fla = False
-									break
-						elif operation == "!=":
-							for b in bs:
-								if 'str' == stype:
-									if b in values:
-										fla = False
-										break
-								else:
-									if float(b) == values:
-										fla = False
-										break
-						elif operation == "=":
-							for b in bs:
-								if 'str' == stype:
-									if not b in values:
-										fla = False
-										break
-								else:
-									if float(b) != values:
-										fla = False
-										break
-					if fla:
-							fw.write("%s\n" % r)
-							m += 1
-				if flag: # only one key in info, do not need to check other key
-					break
-			if not flag: # key is not in info, wrong key?
-				sys.exit('{} is not find in site {} {}'.format(key, arr[0], arr[1]))
-	print "%d of %d variants were written to %s" % (m, n, outfile)
-	fw.close()
-	fr.close()
+    '''
+    filter by info
+    '''
+    fr = open(infile)
+    fw = open(outfile, 'w')
+    n = 0
+    m = 0
+    for r in fr:
+        r = r.strip()
+        if r.startswith("#"):
+            fw.write("%s\n" % r)
+        else:
+            arr = r.split()
+            n += 1
+            ar = arr[7].split(';')
+            flag = False # whether key is in info
+            for z in ar:
+                if z.startswith(key):
+                    flag = True
+                    a = z.split('=')
+                    fla = True # keep site
+                    if a[1] == '.': # missing value
+                        if na == 'keep':
+                            fla = True
+                        else:
+                            fla = False
+                    else: # non-missing value
+                        bs = a[1].split(',') # multiple value
+                        if operation == ">=":
+                            for b in bs:
+                                if float(b) < values[0]:
+                                    fla = False
+                                    break
+                        elif operation == "<=":
+                            for b in bs:
+                                if float(b) > values[0]:
+                                    fla = False
+                                    break
+                        elif operation == "<":
+                            for b in bs:
+                                if float(b) >= values[0]:
+                                    fla = False
+                                    break
+                        elif operation == ">":
+                            for b in bs:
+                                if float(b) <= values[0]:
+                                    fla = False
+                                    break
+                        elif operation == "!=":
+                            for b in bs:
+                                if 'str' == stype:
+                                    if b in values:
+                                        fla = False
+                                        break
+                                else:
+                                    if float(b) == values:
+                                        fla = False
+                                        break
+                        elif operation == "=":
+                            for b in bs:
+                                if 'str' == stype:
+                                    if not b in values:
+                                        fla = False
+                                        break
+                                else:
+                                    if float(b) != values:
+                                        fla = False
+                                        break
+                    if fla:
+                            fw.write("%s\n" % r)
+                            m += 1
+                if flag: # only one key in info, do not need to check other key
+                    break
+            if not flag: # key is not in info, wrong key?
+                sys.exit('{} is not find in site {} {}'.format(key, arr[0], arr[1]))
+    print "%d of %d variants were written to %s" % (m, n, outfile)
+    fw.close()
+    fr.close()
+
 def check_float(s):
-	try:
-		return float(s)
-	except ValueError:
-		return False
+    try:
+        return float(s)
+    except ValueError:
+        return False
+
 def extract_genotype(infile, pp, outfile):
     '''
     extract genotype by chr:pos
@@ -545,6 +570,7 @@ def extract_genotype(infile, pp, outfile):
     print "genotype of {} variants were written to {}".format(m, outfile)
     fw.close()
     fr.close()
+
 def filter_comp_het(infile, inds, geneKey, funcKey, funcValues, outfile):
     '''
     filter by compound heterozygous
@@ -568,7 +594,7 @@ def filter_comp_het(infile, inds, geneKey, funcKey, funcValues, outfile):
                     idx = myind.index(x)
                     indidx.append(idx)
                 else:
-                    sys.exit('{} is not in {}'.format(x, infile))
+                    sys.exit('Error: {} is not in {}'.format(x, infile))
         else:
             arr = r.split()
             n += 1
@@ -609,6 +635,13 @@ def filter_comp_het(infile, inds, geneKey, funcKey, funcValues, outfile):
                         break
                 if flag3:
                     genes[gene].append(one)
+            else:
+                if not flag1:
+                    sys.exit('Error: can not find "{}" in INFO field of the input vcf'.format(funcKey))
+                elif not flag2:
+                     sys.exit('Error: can not find "{}" in INFO field of the input vcf'.format(geneKey))
+                else:
+                    sys.exit('Error: can not find "{}" and "{}" in INFO field of the input vcf'.format(geneKey, funcKey))
     fr.close()
     # check comp
     chg = [] # total genes have comp het
@@ -646,28 +679,26 @@ def filter_comp_het(infile, inds, geneKey, funcKey, funcValues, outfile):
     print "write variants to {}".format(outfile)
     filter_by_phypos(infile, pp, outfile)
     extract_genotype(infile, pp, outfile+'.gtp.txt')
-    
 
 #######################################################
 strattime = time.time()
 #######################################################
 desc = '''Filtering of polymorphisms according to genotypes, physical positions 
-					and thresholds of quality score, read depth and others.'''
+                    and thresholds of quality score, read depth and others.'''
 
 parser = argparse.ArgumentParser(description=desc)
-parser.add_argument('-v', action='version', version='%(prog)s 1.0.0')
+parser.add_argument('-v', action='version', version='%(prog)s 1.2.0')
 ### input
-parser.add_argument('-vcf', '--vcf', help='input vcf file', required=True, type=str)
+parser.add_argument('--vcf', help='input vcf file', required=True, type=str)
 ### filters
-parser.add_argument('-chr', '--chr', help='filter by chromosome', type=str)
-parser.add_argument('-region', '--region', help='filter by region', type=str)
-parser.add_argument('--region-exclude', help='filter by region', type=str)
-parser.add_argument('-qual', '--qual', help='filter by qual score', type=float)
-parser.add_argument('-filter', '--filter', help='filter by filter flag', type=str)
-parser.add_argument('-genotype', '--genotype', help='filter by genotype', type=str,choices=["hom-ref", "hom-alt","het", "het-alt","not-hom-ref","not-two-alt","two-alt","not-het","not-hom-alt"])
+parser.add_argument('--chr', help='filter by chromosome', type=str)
+parser.add_argument('--region', help='filter by region', type=str)
+parser.add_argument('--qual', help='filter by qual score', type=float)
+parser.add_argument('--filter', help='filter by filter flag', type=str)
+parser.add_argument('--genotype', help='filter by genotype', type=str,choices=["hom-ref", "hom-alt","het", "het-alt","not-hom-ref","not-two-alt","two-alt","not-het","not-hom-alt"])
 parser.add_argument('--keep-only-indels', help='keep only indels', action='store_true')
 parser.add_argument('--remove-indels', help='remove indels', action='store_true')
-parser.add_argument('-ids', '--ids', help='filter by ID', type=str)
+parser.add_argument('--ids', help='filter by ID', type=str)
 parser.add_argument('--ids-file', help='filter by ID', type=str)
 parser.add_argument('--phy-pos', help='filter by physical position', type=str)
 parser.add_argument('--phy-pos-file', help='filter by physical position', type=str)
@@ -675,29 +706,31 @@ parser.add_argument('--cmp-gtp-same', help='compare genotype of multiple individ
 parser.add_argument('--cmp-gtp-diff', help='compare genotype of multiple individuals', action='store_true')
 parser.add_argument('--min-alleles', help='minimum number of alleles', type=int)
 parser.add_argument('--max-alleles', help='maximum number of alleles', type=int)
-parser.add_argument('-info', '--info', help='filter by info keys', type=str)
+parser.add_argument('--info', help='filter by info keys', type=str)
 parser.add_argument('--comp-het', help='filter by compound heterozygous', action='store_true')
 parser.add_argument('--gene-key', help='key for gene annotation in INFO field', type = str)
 parser.add_argument('--func-key', help='key for function annotation in INFO field', type = str)
 parser.add_argument('--func-values', help='value for function annotation in INFO field', type = str)
 ### individual
-parser.add_argument('-ind', '--ind', help='individual id', type=str)
+parser.add_argument('--ind', help='individual id', type=str)
 ### missing value
 parser.add_argument('--missing-value', help='how to deal with missing values', default="keep", type=str, choices=["keep", "rm"])
+### reverse command
+parser.add_argument('--reverse', help='reverse the filter', action='store_true')
 ### output
-parser.add_argument('-out', '--out', help='output vcf file', type=str, default='output.vcf')
+parser.add_argument('--out', help='output vcf file', type=str, default='output.vcf')
 #######################################################
 args = vars(parser.parse_args())
-INFILE = args['vcf']
+INFILE = args['vcf'] if 'vcf' in args else None
 OUTFILE = args['out']
+NA = args['missing_value']
+REVERSE = args['reverse'] if 'reverse' in args else False
 CHR = args['chr'] if 'chr' in args else None
 REGION = args['region'] if 'region' in args else None
-REGIONEXCLUDE = args['region_exclude'] if 'region_exclude' in args else None
 QUAL = args['qual'] if 'qual' in args else None
 FILTER = args['filter'] if 'filter' in args else None
 GENOTYPE = args['genotype'] if 'genotype' in args else None
 IND = args['ind'] if 'ind' in args else None
-NA = args['missing_value']
 INDEL = args['keep_only_indels'] if 'keep_only_indels' in args else False
 SNP = args['remove_indels'] if 'remove_indels' in args else False
 IDS = args['ids'] if 'ids' in args else None
@@ -715,7 +748,7 @@ FUNCKEY = args['func_key'] if 'func_key' in args else None
 FUNCVALUES = args['func_values'] if 'func_values' in args else None
 #######################################################
 print "@-------------------------------------------------------------@"
-print "|        vcfFilter      |      v1.1.0       |   24 May 2016   |"
+print "|        vcfFilter      |      v1.2.0       |   08 Jun 2016   |"
 print "|-------------------------------------------------------------|"
 print "|  (C) 2016 Felix Yanhui Fan, GNU General Public License, v2  |"
 print "|-------------------------------------------------------------|"
@@ -723,49 +756,60 @@ print "|    For documentation, citation & bug-report instructions:   |"
 print "|            http://felixfan.github.io/vcfFilter              |"
 print "@-------------------------------------------------------------@"
 print "\n\tOptions in effect:"
-print "\t-vcf", INFILE
+print "\t--vcf", INFILE
 if CHR:
-    print "\t-chr", CHR
+    print "\t--chr", CHR
+    if REVERSE:
+        print "\t--reverse"
 elif REGION:
-    print "\t-region", REGION
-elif REGIONEXCLUDE:
-    print "\t--region-exclude", REGIONEXCLUDE
+    print "\t--region", REGION
+    if REVERSE:
+        print "\t--reverse"
 elif QUAL:
-    print "\t-qual", QUAL
+    print "\t--qual", QUAL
 elif FILTER:
-    print "\t-filter", FILTER
+    print "\t--filter", FILTER
 elif GENOTYPE:
-    print "\t-genotype", GENOTYPE
+    print "\t--genotype", GENOTYPE
     if IND:
-        print "\t-ind", IND
+        print "\t--ind", IND
     else:
-        sys.exit("Error, argment -ind is missing!")
+        sys.exit("Error, argment --ind is missing!")
     print "\t--missing-value", NA
 elif INDEL:
     print "\t--keep-only-indels"
 elif SNP:
     print "\t--remove-indels" 
 elif IDS:
-    print "\t-ids", IDS
+    print "\t--ids", IDS
+    if REVERSE:
+        print "\t--reverse"
 elif IDSFILE:
     print "\t--ids-file", IDSFILE
+    if REVERSE:
+        print "\t--reverse"
 elif PHYPOS:
     print "\t--phy-pos", PHYPOS
+    if REVERSE:
+        print "\t--reverse"
 elif PHYPOSFILE:
     print "\t--phy-pos-file", PHYPOSFILE
+    if REVERSE:
+        print "\t--reverse"
+
 elif CMPGTPSAME:
     print "\t--cmp-gtp-same"
     if IND:
-        print "\t-ind", IND
+        print "\t--ind", IND
     else:
-        sys.exit("Error, argment -ind is missing!")
+        sys.exit("Error, argment --ind is missing!")
     print "\t--missing-value", NA
 elif CMPGTPDIFF:
     print "\t--cmp-gtp-diff"
     if IND:
-        print "\t-ind", IND
+        print "\t--ind", IND
     else:
-        sys.exit("Error, argment -ind is missing!")
+        sys.exit("Error, argment --ind is missing!")
     print "\t--missing-value", NA
 elif MINALLELES and MAXALLELES:
     print "\t--min-alleles", MINALLELES
@@ -775,14 +819,14 @@ elif MINALLELES:
 elif MAXALLELES:
     print "\t--max-alleles", MAXALLELES
 elif INFO:
-    print "\t-info", INFO
+    print "\t--info", INFO
     print "\t--missing-value", NA
 elif COMPHET:
     print "\t--comp-het"
     if IND:
-        print "\t-ind", IND
+        print "\t--ind", IND
     else:
-        sys.exit("Error, argment -ind is missing!")
+        sys.exit("Error, argment --ind is missing!")
     if GENEKEY:
         print "\t--gene-key", GENEKEY
     else:
@@ -795,27 +839,28 @@ elif COMPHET:
         print "\t--func-values", FUNCVALUES
     else:
         sys.exit("Error, argment --func-values is missing!")    
-print "\t-out", OUTFILE
+print "\t--out", OUTFILE
 print
 #######################################################
 if CHR:
     chrs = split_str_comma_dash(CHR)
-    print "keep variants on chromosomes:", chrs
-    filter_by_chr(INFILE,chrs, OUTFILE)
+    if REVERSE:
+        print "exclude variants on chromosomes:", chrs
+        filter_by_chr(INFILE,chrs, OUTFILE, True)
+    else:
+        print "keep variants on chromosomes:", chrs
+        filter_by_chr(INFILE,chrs, OUTFILE)
 elif REGION:
     tmp = REGION.split(':')
     chrom = tmp[0]
     start = int(tmp[1].split('-')[0])
     end = int(tmp[1].split('-')[1])
-    print "keep variants in region: from {} to {} on chromosome {}".format(start, end, chrom)
-    filter_by_region(INFILE,chrom,start,end,OUTFILE)
-elif REGIONEXCLUDE:
-    tmp = REGIONEXCLUDE.split(':')
-    chrom = tmp[0]
-    start = int(tmp[1].split('-')[0])
-    end = int(tmp[1].split('-')[1])
-    print "keep variants out of region: from {} to {} on chromosome {}".format(start, end, chrom)
-    filter_by_region(INFILE,chrom,start,end,OUTFILE, True)
+    if not REVERSE:
+        print "keep variants in region: from {} to {} on chromosome {}".format(start, end, chrom)
+        filter_by_region(INFILE,chrom,start,end,OUTFILE)
+    else:
+        print "exclude variants in region: from {} to {} on chromosome {}".format(start, end, chrom)
+        filter_by_region(INFILE,chrom,start,end,OUTFILE, True)
 elif QUAL:
     cutoff = float(QUAL)
     print "keep variants with qual score no less than %f" % cutoff
@@ -854,33 +899,39 @@ elif INDEL:
 elif SNP:
     print "remove indels"
     filter_indels(INFILE, SNP, OUTFILE)
-elif IDS:
-    print "keep variants by ID"
-    ids = IDS.split(',')
-    filter_by_var_ids(INFILE, ids, OUTFILE)
-elif IDSFILE:
-    print "keep variants by ID"
+elif IDS or IDSFILE:
     ids = []
-    tf = open(IDSFILE)
-    for r in tf:
-        r = r.strip()
-        ids.append(r)
-    tf.close()
-    filter_by_var_ids(INFILE, ids, OUTFILE)
-elif PHYPOS:
-    print "keep variants by physical position"
-    pp = PHYPOS.split(',')
-    filter_by_phypos(INFILE, pp, OUTFILE)
-elif PHYPOSFILE:
-    print "keep variants by physical position"
+    if IDS:
+        ids = IDS.split(',')
+    else:
+        tf = open(IDSFILE)
+        for r in tf:
+            r = r.strip()
+            ids.append(r)
+        tf.close()
+    if not REVERSE:
+        print "keep variants by ID" 
+        filter_by_var_ids(INFILE, ids, OUTFILE)
+    else:
+        print "exclude variants by ID"
+        filter_by_var_ids(INFILE, ids, OUTFILE, True)
+elif PHYPOS or PHYPOSFILE:
     pp = []
-    tf = open(PHYPOSFILE)
-    for r in tf:
-        r = r.strip()
-        arr = r.split()
-        pp.append(arr[0]+":"+arr[1])
-    tf.close()
-    filter_by_phypos(INFILE, pp, OUTFILE)
+    if PHYPOSFILE:
+        tf = open(PHYPOSFILE)
+        for r in tf:
+            r = r.strip()
+            arr = r.split()
+            pp.append(arr[0]+":"+arr[1])
+        tf.close()
+    else:
+        pp = PHYPOS.split(',')
+    if not REVERSE:
+        print "keep variants by physical position"
+        filter_by_phypos(INFILE, pp, OUTFILE)
+    else:
+        print "exclude variants by physical position"
+        filter_by_phypos(INFILE, pp, OUTFILE, True)
 elif CMPGTPSAME:
     print "compare genotype of multiple individuals"
     print "only variants have the same genotype across the following individuals will be kept"
@@ -989,18 +1040,18 @@ usedtime = time.time() - strattime
 print
 print "Time used:",
 if usedtime >=60:
-	ts = int(usedtime) % 60
-	usedtime = int(usedtime) / 60
-	tm = int(usedtime) % 60
-	usedtime = int(usedtime) / 60
-	th = int(usedtime) % 60
-	if th > 0:
-		print "%d hours"  % th,
-		print "%d minutes"  % tm,
-	elif tm > 0:
-		print "%d minutes"  % tm,
+    ts = int(usedtime) % 60
+    usedtime = int(usedtime) / 60
+    tm = int(usedtime) % 60
+    usedtime = int(usedtime) / 60
+    th = int(usedtime) % 60
+    if th > 0:
+        print "%d hours"  % th,
+        print "%d minutes"  % tm,
+    elif tm > 0:
+        print "%d minutes"  % tm,
 else:
-	ts = usedtime
+    ts = usedtime
 print '%.2f seconds' % ts
 print "Finished at ",
 print time.strftime("%H:%M:%S %d %b %Y")
