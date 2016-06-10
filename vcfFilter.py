@@ -86,7 +86,19 @@ def filter_by_chr(infile, chrs,outfile, exclude=False):
     fw.close()
     fr.close()
 
-def filter_by_region(infile, chrom, start, end, outfile, exclude=False):
+def check_region(chrom, pos, regions):
+    '''
+    check whether the chrom:pos is in regions
+    regions is a list, each element of it is also a list: [chr, start, end]
+    '''
+    flag = False
+    for r in regions:
+        if chrom == r[0]:
+            if r[2] >= pos >= r[1]:
+                flag = True
+    return flag
+
+def filter_by_region(infile, regions, outfile, exclude=False):
     '''
     filter by region
     '''
@@ -102,13 +114,11 @@ def filter_by_region(infile, chrom, start, end, outfile, exclude=False):
             arr = r.split()
             n += 1
             if not exclude:
-                if arr[0] == chrom and int(arr[1]) >= start and int(arr[1]) <= end:
+                if check_region(arr[0], int(arr[1]), regions):
                     fw.write("%s\n" % r)
                     m += 1
             else:
-                if arr[0] == chrom and int(arr[1]) >= start and int(arr[1]) <= end:
-                    pass
-                else:
+                if not check_region(arr[0], int(arr[1]), regions):
                     fw.write("%s\n" % r)
                     m += 1
     print "%d of %d variants were written to %s" % (m, n, outfile)
@@ -775,6 +785,7 @@ parser.add_argument('--vcf', help='input vcf file', required=True, type=str)
 ### filters
 parser.add_argument('--chr', help='filter by chromosome', type=str)
 parser.add_argument('--region', help='filter by region', type=str)
+parser.add_argument('--region-file', help='filter by region', type=str)
 parser.add_argument('--qual', help='filter by qual score', type=float)
 parser.add_argument('--filter', help='filter by filter flag', type=str)
 parser.add_argument('--genotype', help='filter by genotype', type=str,choices=["hom-ref", "hom-alt","het", "het-alt","not-hom-ref","not-two-alt","two-alt","not-het","not-hom-alt"])
@@ -813,6 +824,7 @@ NA = args['missing_value']
 REVERSE = args['reverse'] if 'reverse' in args else False
 CHR = args['chr'] if 'chr' in args else None
 REGION = args['region'] if 'region' in args else None
+REGIONFILE = args['region_file'] if 'region_file' in args else None
 QUAL = args['qual'] if 'qual' in args else None
 FILTER = args['filter'] if 'filter' in args else None
 GENOTYPE = args['genotype'] if 'genotype' in args else None
@@ -838,7 +850,7 @@ MISSRATE= args['missing_rate'] if 'missing_rate' in args else None
 MISSCOUNT = args['missing_count'] if 'missing_count' in args else None
 #######################################################
 print "@-------------------------------------------------------------@"
-print "|        vcfFilter      |      v1.2.0       |   08 Jun 2016   |"
+print "|        vcfFilter      |      v1.2.0       |   10 Jun 2016   |"
 print "|-------------------------------------------------------------|"
 print "|  (C) 2016 Felix Yanhui Fan, GNU General Public License, v2  |"
 print "|-------------------------------------------------------------|"
@@ -853,6 +865,10 @@ if CHR:
         print "\t--reverse"
 elif REGION:
     print "\t--region", REGION
+    if REVERSE:
+        print "\t--reverse"
+elif REGIONFILE:
+    print "\t--region-file", REGIONFILE
     if REVERSE:
         print "\t--reverse"
 elif QUAL:
@@ -961,12 +977,27 @@ elif REGION:
     chrom = tmp[0]
     start = int(tmp[1].split('-')[0])
     end = int(tmp[1].split('-')[1])
+    regions = [[chrom,start,end]]
     if not REVERSE:
         print "keep variants in region: from {} to {} on chromosome {}".format(start, end, chrom)
-        filter_by_region(INFILE,chrom,start,end,OUTFILE)
+        filter_by_region(INFILE,regions,OUTFILE)
     else:
         print "exclude variants in region: from {} to {} on chromosome {}".format(start, end, chrom)
-        filter_by_region(INFILE,chrom,start,end,OUTFILE, True)
+        filter_by_region(INFILE,regions,OUTFILE, True)
+elif REGIONFILE:
+    regions = []
+    tf = open(REGIONFILE)
+    for r in tf:
+        r = r.strip()
+        arr = r.split()
+        regions.append([arr[0], int(arr[1]), int(arr[1])])
+    tf.close()
+    if not REVERSE:
+        print "keep variants in regions: {}".format(regions)
+        filter_by_region(INFILE,regions,OUTFILE)
+    else:
+        print "exclude variants in regions: {}".format(regions)
+        filter_by_region(INFILE,regions,OUTFILE, True)
 elif QUAL:
     cutoff = float(QUAL)
     print "keep variants with qual score no less than %f" % cutoff
