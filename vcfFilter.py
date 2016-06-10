@@ -549,6 +549,94 @@ def filter_by_info(infile, outfile,key,operation,values,na,stype='float'):
     fw.close()
     fr.close()
 
+def filter_by_format(infile, outfile, key, operation, values, stype='float'):
+    '''
+    filter by format
+    '''
+    fr = open(infile)
+    fw = open(outfile, 'w')
+    n = 0
+    m = 0
+    idx = -1
+    flag = False
+    for r in fr:
+        r = r.strip()
+        if r.startswith("#"):
+            fw.write("%s\n" % r)
+        else:
+            arr = r.split()
+            n += 1
+            if idx == -1:
+                ar = arr[8].split(':')
+                for z in xrange(len(ar)):
+                    if ar[z] == key:
+                        idx = z
+                        flag = True
+                if not flag:
+                    sys.exit('{} is not find in format field of the input vcf file'.format(key))
+            # write output
+            fw.write('{}'.format(arr[0]))
+            for z in arr[1:9]:
+                fw.write('\t{}'.format(z))
+            for z in arr[9:]:
+                if z == '.':
+                    fw.write('\t{}'.format('.'))
+                else:
+                    fla = True
+                    ag = z.split(':')
+                    if ag[idx]  == '.':
+                        fla = False
+                    else:                        
+                        bs = ag[idx].split(',') # multiple value
+                        if operation == ">=":
+                            for b in bs:
+                                if float(b) < values[0]:
+                                    fla = False
+                                    break
+                        elif operation == "<=":
+                            for b in bs:
+                                if float(b) > values[0]:
+                                    fla = False
+                                    break
+                        elif operation == "<":
+                            for b in bs:
+                                if float(b) >= values[0]:
+                                    fla = False
+                                    break
+                        elif operation == ">":
+                            for b in bs:
+                                if float(b) <= values[0]:
+                                    fla = False
+                                    break
+                        elif operation == "!=":
+                            for b in bs:
+                                if 'str' == stype:
+                                    if b in values:
+                                        fla = False
+                                        break
+                                else:
+                                    if float(b) == values:
+                                        fla = False
+                                        break
+                        elif operation == "=":
+                            for b in bs:
+                                if 'str' == stype:
+                                    if not b in values:
+                                        fla = False
+                                        break
+                                else:
+                                    if float(b) != values:
+                                        fla = False
+                                        break
+                    if fla:
+                        fw.write("\t{}".format(z))
+                    else:
+                        fw.write('\t{}'.format('.'))
+            fw.write('\n')
+    print "%d variants were written to %s" % (n, outfile)
+    fw.close()
+    fr.close()
+
 def check_float(s):
     try:
         return float(s)
@@ -772,6 +860,57 @@ def filter_missing(infile, cutoff, outfile, count=False):
     print "%d of %d variants were written to %s" % (m, n, outfile)
     fw.close()
     fr.close()
+
+def check_info_format_command(FORMAT):
+    '''
+    help function
+    '''
+    stype = 'float'
+    if -1 != FORMAT.find('>='):
+        tmp = FORMAT.split('>=')
+        key = tmp[0]
+        operation = '>='
+        values = [float(tmp[1])]
+    elif -1 != FORMAT.find('<='):
+        tmp = FORMAT.split('<=')
+        key = tmp[0]
+        operation = '<='
+        values = [float(tmp[1])]
+    elif -1 != FORMAT.find('<'):
+        tmp = FORMAT.split('<')
+        key = tmp[0]
+        operation = '<'
+        values = [float(tmp[1])]
+    elif -1 != FORMAT.find('>'):
+        tmp = FORMAT.split('>')
+        key = tmp[0]
+        operation = '>'
+        values = [float(tmp[1])]
+    elif -1 != FORMAT.find('!='):
+        tmp = FORMAT.split('!=')
+        key = tmp[0]
+        operation = '!='
+        value = check_float(tmp[1])
+        values = None
+        if value:
+            stype = 'float'
+            values = [value]
+        else:
+            stype = 'str'
+            values = tmp[1].split(',')
+    elif -1 != FORMAT.find('='):
+        tmp = FORMAT.split('=')
+        key = tmp[0]
+        operation = '='
+        value = check_float(tmp[1])
+        values = None
+        if value:
+            stype = 'float'
+            values = [value]
+        else:
+            stype = 'str'
+            values = tmp[1].split(',')
+    return (key, operation, values, stype)
 #######################################################
 strattime = time.time()
 #######################################################
@@ -808,6 +947,7 @@ parser.add_argument('--keep-inds', help='filter by individual id', action='store
 parser.add_argument('--remove-inds', help='filter by individual id', action='store_true')
 parser.add_argument('--missing-rate', help='filter by missing rate', type=str)
 parser.add_argument('--missing-count', help='filter by missing count', type=str)
+parser.add_argument('--format', help='filter by format keys', type=str)
 ### individual
 parser.add_argument('--ind', help='individual id', type=str)
 ### missing value
@@ -848,6 +988,7 @@ KEEPINDS = args['keep_inds'] if 'keep_inds' in args else False
 REMOVEINDS = args['remove_inds'] if 'remove_inds' in args else False
 MISSRATE= args['missing_rate'] if 'missing_rate' in args else None
 MISSCOUNT = args['missing_count'] if 'missing_count' in args else None
+FORMAT = args['format'] if 'format' in args else None
 #######################################################
 print "@-------------------------------------------------------------@"
 print "|        vcfFilter      |      v1.2.0       |   10 Jun 2016   |"
@@ -961,6 +1102,8 @@ elif MISSRATE:
     print "\t--missing-rate", MISSRATE
 elif MISSCOUNT:
     print "\t--missing-count", MISSCOUNT
+elif FORMAT:
+    print "\t--format", FORMAT
 print "\t--out", OUTFILE
 print
 #######################################################
@@ -1108,62 +1251,9 @@ elif MAXALLELES:
     filter_num_alleles(INFILE, MINALLELES, MAXALLELES, OUTFILE)
 elif INFO:
     print "filter sites by INFO keys"
-    if -1 != INFO.find('>='):
-        tmp = INFO.split('>=')
-        key = tmp[0]
-        operation = '>='
-        value = [float(tmp[1])]
-        print "keep sites with {} {} {}".format(key, operation, value)
-        filter_by_info(INFILE, OUTFILE,key,operation,value,NA)
-    elif -1 != INFO.find('<='):
-        tmp = INFO.split('<=')
-        key = tmp[0]
-        operation = '<='
-        value = [float(tmp[1])]
-        print "keep sites with {} {} {}".format(key, operation, value)
-        filter_by_info(INFILE, OUTFILE,key,operation,value,NA)
-    elif -1 != INFO.find('<'):
-        tmp = INFO.split('<')
-        key = tmp[0]
-        operation = '<'
-        value = [float(tmp[1])]
-        print "keep sites with {} {} {}".format(key, operation, value)
-        filter_by_info(INFILE, OUTFILE,key,operation,value,NA)
-    elif -1 != INFO.find('>'):
-        tmp = INFO.split('>')
-        key = tmp[0]
-        operation = '>'
-        value = [float(tmp[1])]
-        print "keep sites with {} {} {}".format(key, operation, value)
-        filter_by_info(INFILE, OUTFILE,key,operation,value,NA)
-    elif -1 != INFO.find('!='):
-        tmp = INFO.split('!=')
-        key = tmp[0]
-        operation = '!='
-        value = check_float(tmp[1])
-        values = None
-        if value:
-            stype = 'float'
-            values = [value]
-        else:
-            stype = 'str'
-            values = tmp[1].split(',')
-        print "keep sites with {} {} {}".format(key, operation, values)
-        filter_by_info(INFILE, OUTFILE,key,operation,values,NA,stype)
-    elif -1 != INFO.find('='):
-        tmp = INFO.split('=')
-        key = tmp[0]
-        operation = '='
-        value = check_float(tmp[1])
-        values = None
-        if value:
-            stype = 'float'
-            values = [value]
-        else:
-            stype = 'str'
-            values = tmp[1].split(',')
-        print "keep sites with {} {} {}".format(key, operation, values)
-        filter_by_info(INFILE, OUTFILE,key,operation,values,NA,stype)
+    key, operation, values, stype = check_info_format_command(INFO)
+    print "keep sites with {} {} {}".format(key, operation, values)
+    filter_by_info(INFILE, OUTFILE,key,operation,values,NA,stype)
 elif COMPHET:
     inds = split_str_comma(IND)
     funcValues = split_str_comma(FUNCVALUES)
@@ -1190,6 +1280,11 @@ elif MISSCOUNT:
         filter_missing(INFILE, MISSCOUNT, OUTFILE, True)
     else:
         sys.exit('missing count should be a positive int')
+elif FORMAT:
+    print "filter sites by FORMAT keys"
+    key, operation, values, stype = check_info_format_command(FORMAT)
+    print "keep sites with {} {} {}".format(key, operation, values)
+    filter_by_format(INFILE, OUTFILE,key,operation,values,stype)
 else:
     sys.exit('do nothing!')
 ###############################################################################
