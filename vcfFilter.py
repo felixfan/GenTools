@@ -912,6 +912,27 @@ def check_info_format_command(FORMAT):
             values = tmp[1].split(',')
     return (key, operation, values, stype)
 
+def run_time(starttime):
+    usedtime = time.time() - starttime
+    print
+    print "Time used:",
+    if usedtime >=60:
+        ts = int(usedtime) % 60
+        usedtime = int(usedtime) / 60
+        tm = int(usedtime) % 60
+        usedtime = int(usedtime) / 60
+        th = int(usedtime) % 60
+        if th > 0:
+            print "%d hours"  % th,
+            print "%d minutes"  % tm,
+        elif tm > 0:
+            print "%d minutes"  % tm,
+    else:
+        ts = usedtime
+    print '%.2f seconds' % ts
+    print "Finished at ",
+    print time.strftime("%H:%M:%S %d %b %Y")
+
 if __name__ == '__main__':
     strattime = time.time()
 
@@ -957,7 +978,7 @@ if __name__ == '__main__':
     parser.add_argument('--reverse', help='reverse the filter', action='store_true')
     ### output
     parser.add_argument('--out', help='output vcf file', type=str, default='output.vcf')
-    #######################################################
+    ### param
     args = vars(parser.parse_args())
     INFILE = args['vcf'] if 'vcf' in args else None
     OUTFILE = args['out']
@@ -990,7 +1011,7 @@ if __name__ == '__main__':
     MISSRATE= args['missing_rate'] if 'missing_rate' in args else None
     MISSCOUNT = args['missing_count'] if 'missing_count' in args else None
     FORMAT = args['format'] if 'format' in args else None
-    #######################################################
+    ###log
     print "@-------------------------------------------------------------@"
     print "|        vcfFilter      |      v1.5.0       |   13 Jun 2016   |"
     print "|-------------------------------------------------------------|"
@@ -1107,7 +1128,7 @@ if __name__ == '__main__':
         print "\t--format", FORMAT
     print "\t--out", OUTFILE
     print
-    #######################################################
+    ### run
     if CHR:
         chrs = split_str_comma_dash(CHR)
         if REVERSE:
@@ -1288,23 +1309,5 @@ if __name__ == '__main__':
         filter_by_format(INFILE, OUTFILE,key,operation,values,stype)
     else:
         sys.exit('do nothing!')
-    ###############################################################################
-    usedtime = time.time() - strattime
-    print
-    print "Time used:",
-    if usedtime >=60:
-        ts = int(usedtime) % 60
-        usedtime = int(usedtime) / 60
-        tm = int(usedtime) % 60
-        usedtime = int(usedtime) / 60
-        th = int(usedtime) % 60
-        if th > 0:
-            print "%d hours"  % th,
-            print "%d minutes"  % tm,
-        elif tm > 0:
-            print "%d minutes"  % tm,
-    else:
-        ts = usedtime
-    print '%.2f seconds' % ts
-    print "Finished at ",
-    print time.strftime("%H:%M:%S %d %b %Y")
+    ###run time
+    run_time(starttime)
