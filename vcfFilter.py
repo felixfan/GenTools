@@ -934,7 +934,7 @@ def run_time(starttime):
     print time.strftime("%H:%M:%S %d %b %Y")
 
 if __name__ == '__main__':
-    strattime = time.time()
+    starttime = time.time()
 
     desc = '''Filtering of polymorphisms according to genotypes, physical positions 
                         and thresholds of quality score, read depth and others.'''
