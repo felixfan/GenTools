@@ -6,38 +6,37 @@ output:
     toc: true
     toc_depth: 6
     toc_float: true
-    number_sections: true
 ---
 
-# pyVcfFilter
+# 1. pyVcfFilter
 
 Filtering of variants according to genotypes and thresholds for the 8 fixed fields in VCF file.
 
-## Variant Position Filtering
+## 1.1 Variant Position Filtering
 
-### Chromosome filtering (`--chr`)
+### 1.1.1 Chromosome filtering (`--chr`)
 
 Filtering by **CHROM** field. `--chr` accepts one argument. You can use `--chr` multiple times to specify multiple chromosome, or you can use '-' to specify multiple chromesomes (autosomes only).  
 
-#### Keep all autosomes (separated by "-")
+#### 1.1.1.1 Keep all autosomes (separated by "-")
 
 ```
 python pyVcfFilter.py --vcf example/input.vcf --chr chr1-chr22 --out example/output.vcf
 ```
 
-#### Keep chromosomes 1 and 6 (multiple `--chr`)
+#### 1.1.1.2 Keep chromosomes 1 and 6 (multiple `--chr`)
 
 ```
 python pyVcfFilter.py --vcf example/input.vcf --chr chr1 --chr chr6 --out example/output.vcf
 ```
 
-#### Keep all autosomes and chromosome X and Y ("-" and multiple `--chr`)
+#### 1.1.1.3 Keep all autosomes and chromosome X and Y ("-" and multiple `--chr`)
 
 ```
 python pyVcfFilter.py --vcf example/input.vcf --chr chr1-chr22 --chr chrX --chr chrY --out example/output.vcf
 ```
 
-#### Exclude chromosomes
+#### 1.1.1.4 Exclude chromosomes
 
 use `--reverse` to reverse the filter. e.g., exclude chr3 and chr6
 
@@ -45,7 +44,7 @@ use `--reverse` to reverse the filter. e.g., exclude chr3 and chr6
 python pyVcfFilter.py --vcf example/input.vcf --chr chr3 --chr chr6 --reverse --out example/output.vcf
 ```
 
-### Region filtering (`--region` and `--region-file`)
+### 1.1.2 Region filtering (`--region` and `--region-file`)
 
 Filtering by **CHROM** and **POS** fields. `--region` accepts three arguments: chromosome, start, end. `--region-file` accepts one argument, which is a file name. There are multiple rows in the file, and each row has three columns: chromosome, start, end.  e.g.  
 
@@ -54,7 +53,7 @@ chr1  1000000 3000000
 chr6  140000000 150000000
 ```
 
-#### Single region
+#### 1.1.2.1 Single region
 
 Keep only the 10 Mb (140Mb-150Mb) region on chromosome 6:  
 
@@ -68,7 +67,7 @@ Exclude the 10 Mb (140Mb-150Mb) region on chromosome 6:
 python pyVcfFilter.py --vcf example/input.vcf --region chr6  140000000 150000000 --reverse --out example/output.vcf
 ```
 
-#### Multiple regions
+#### 1.1.2.2 Multiple regions
 
 ```
 python pyVcfFilter.py --vcf example/input.vcf --region-file example/regions.txt --out example/output.vcf
@@ -78,7 +77,7 @@ python pyVcfFilter.py --vcf example/input.vcf --region-file example/regions.txt 
 python pyVcfFilter.py --vcf example/input.vcf --region-file example/regions.txt --out example/output.vcf --reverse
 ```
 
-### Physical position filtering (`--phy-pos` and `--phy-pos-file`)
+### 1.1.3 Physical position filtering (`--phy-pos` and `--phy-pos-file`)
 
 Filtering by **CHROM** and **POS** fields. `--phy-pos`  accepts two arguments: chromosome, position. `--phy-pos-file` accepts one argument, file name of the postion information. Each row of the file contains two columns, the first column is chromosome and the second column is position. e.g.
 
@@ -89,7 +88,7 @@ chr1  12861602
 
 `--reverse` can be used to reverse the filter. 
 
-#### Single position
+#### 1.1.3.1 Single position
 
 ```
 python pyVcfFilter.py --vcf example/input.vcf --phy-pos chr1 12861602 --out example/output.vcf
@@ -99,7 +98,7 @@ python pyVcfFilter.py --vcf example/input.vcf --phy-pos chr1 12861602 --out exam
 python pyVcfFilter.py --vcf example/input.vcf --phy-pos chr1 12861602 --reverse --out example/output.vcf
 ```
 
-#### Multiple positions were stored in a file
+#### 1.1.3.2 Multiple positions were stored in a file
 
 ```
 python pyVcfFilter.py --vcf example/input.vcf --phy-pos-file example/phypos.txt --out example/output.vcf
@@ -109,7 +108,7 @@ python pyVcfFilter.py --vcf example/input.vcf --phy-pos-file example/phypos.txt 
 python pyVcfFilter.py --vcf example/input.vcf --phy-pos-file example/phypos.txt --reverse --out example/output.vcf
 ```
 
-## Variant ID Filtering (`--id` and `--id-file`)
+## 1.2 Variant ID Filtering (`--id` and `--id-file`)
 
 Filtering by **ID** field. `--id` accepts one argument. You can use `--id` multiple times to specify multiple SNP ID, or you can use `--id-file` to specify a file of multiple SNP IDs. Each row of the file contains one ID. e.g.     
 
@@ -118,24 +117,24 @@ rs123
 rs124
 ```
 
-### Single ID
+### 1.2.1 Single ID
 
 ```
 python pyVcfFilter.py --vcf example/input.vcf --id rs123 --out example/output.vcf
 ```
 
-### Multiple IDs using multiple `--id`
+### 1.2.2 Multiple IDs using multiple `--id`
 ```
 python pyVcfFilter.py --vcf example/input.vcf --id rs123 --id rs124 --out example/output.vcf
 ```
 
-### Multiple IDs using `--id-file`
+### 1.2.3 Multiple IDs using `--id-file`
 
 ```
 python pyVcfFilter.py --vcf example/input.vcf --id-file example/ids.txt --out example/output.vcf
 ```
 
-### Remove variants by IDs
+### 1.2.4 Remove variants by IDs
 
 use `--reverse` to reverse the filter.
 
@@ -147,7 +146,7 @@ python pyVcfFilter.py --vcf example/input.vcf --id rs123 --id rs124 --reverse --
 python pyVcfFilter.py --vcf example/input.vcf --id-file example/ids.txt --reverse --out example/output.vcf
 ```
 
-## Variant Type Filtering (`--keep-only-indels` and `--remove-indels`)
+## 1.3 Variant Type Filtering (`--keep-only-indels` and `--remove-indels`)
 
 Filtering by **REF** and **ALT** fields. If one site only has one ALT allele, "indel" here means that the length of REF and ALT allele is different. If one site has multiple ALT alleles, "indel" here means that at least one ALT allele has different length from REF allele. Site 1 and 2 will be defined as "indel" in the forllowing four sites.
 
@@ -159,35 +158,35 @@ site   REF                ALT
 4      T                  G
 ```
 
-### Keep only sites that contain an indel
+### 1.3.1 Keep only sites that contain an indel
 
 ```
 python pyVcfFilter.py --vcf example/input.vcf --keep-only-indels --out example/output.vcf
 ```
 
-### Exclude sites that contain an indel
+### 1.3.2 Exclude sites that contain an indel
 
 ```
 python pyVcfFilter.py --vcf example/input.vcf --remove-indels --out example/output.vcf
 ```
 
-## FILTER Flag Filtering (`--filter`)
+## 1.4 FILTER Flag Filtering (`--filter`)
 
 Filtering by **FILTER** field. You can use `--filter` multiple times to specify multiple FILTER flags.
 
-### Keep variants with FILTER flag: "PASS"
+### 1.4.1 Keep variants with FILTER flag: "PASS"
 
 ```
 python pyVcfFilter.py --vcf example/input.vcf --filter PASS --out example/output.vcf
 ```
 
-### Keep variants with multiple FILTER flags
+### 1.4.2 Keep variants with multiple FILTER flags
 
 ```
 python pyVcfFilter.py --vcf example/input.vcf --filter PASS --filter VQSRTrancheINDEL99.90to100.00 --filter VQSRTrancheSNP99.90to100.00 --out example/output.vcf
 ```
 
-## INFO Field Filtering (`--info`)
+## 1.5 INFO Field Filtering (`--info`)
 
 Filtering by **INFO** field. This option filter on the presence of the key and its value. INFO fields in VCF are encoded as a semicolon-separated series of short keys with optional values in the format:
 
@@ -206,7 +205,7 @@ When [annovar](http://annovar.openbioinformatics.org/en/latest/) was used to ann
 
 The following examples show how it works. **Please be noted that annovar was used to annotate the vcf, so there are some keys may not in your vcf.**
 
-#### Remove variants wilth alternatice allele frequency higher than 0.01
+### 1.5.1 Remove variants wilth alternatice allele frequency higher than 0.01
 
 ```
 python pyVcfFilter.py --vcf example/input.vcf --info --key 'AF' --operator '<=' --value 0.01 --out example/output.vcf
@@ -214,19 +213,19 @@ python pyVcfFilter.py --vcf example/input.vcf --info --key 'AF' --operator '<=' 
 
 Note: Currently, this only works for variants with only one alternative allele.   
 
-#### Remove variants if the combined depth across samples is less than 200 
+### 1.5.2 Remove variants if the combined depth across samples is less than 200 
 
 ```
 python pyVcfFilter.py --vcf example/input.vcf --info --key 'DP' --operator '>=' --value 200 --out example/output.vcf
 ```
 
-#### Remove variants if the RMS mapping quality is less than 50
+### 1.5.3 Remove variants if the RMS mapping quality is less than 50
 
 ```
 python pyVcfFilter.py --vcf example/input.vcf --info --key 'MQ' --operator '>=' --value 50 --out example/output.vcf
 ```
 
-#### Remove variants located in the intergenic, downstream or upstream region
+### 1.5.4 Remove variants located in the intergenic, downstream or upstream region
 
 ```
 python pyVcfFilter.py --vcf example/input.vcf --out example/output.vcf --info --key 'Func_refGene' --operator '!=' --value 'intergenic' --value 'downstream' --value 'upstream' 
@@ -238,33 +237,33 @@ By default, missing value will be kept, you can change this by adding `--missing
 python pyVcfFilter.py --vcf example/input.vcf --out example/output.vcf --info --key 'Func_refGene' --operator '!=' --value 'intergenic' --value 'downstream' --value 'upstream' --missing-value rm
 ```
 
-#### Remove variants wilth alternatice allele frequency in 1000 genomes higher than 0.05
+### 1.5.5 Remove variants wilth alternatice allele frequency in 1000 genomes higher than 0.05
 
 ```
 python pyVcfFilter.py --vcf example/input.vcf --info --key '1000g2015aug_all' --operator '<=' --value 0.05 --missing-value keep --out example/output.vcf
 ```
 
-#### Remove variants were predicted as 'D' by SIFT 
+### 1.5.6 Remove variants were predicted as 'D' by SIFT 
 
 ```
 python pyVcfFilter.py --vcf example/input.vcf --info --key 'SIFT_pred' --operator '==' --value 'D' --missing-value keep --out example/output.vcf
 ```
 
-## QUAL Field Filtering (`--qual`)
+## 1.6 QUAL Field Filtering (`--qual`)
 
 Filtering by **QUAL** field.  
 
-### Keep variants with phred-scaled quality score no less than 30
+### 1.6.1 Keep variants with phred-scaled quality score no less than 30
 
 ```
 python pyVcfFilter.py --vcf example/input.vcf --qual 30 --out example/output.vcf
 ```
 
-## Allele Filtering
+## 1.7 Allele Filtering
 
 Filtering by **ALT** field. 
 
-### Minimum / maximum number of alleles
+### 1.7.1 Minimum / maximum number of alleles
 
 Only sites have alleles no less than (`>=`) the minimum number will be kept.
 
@@ -278,7 +277,7 @@ Only sites have alleles no more than (`<=`) the maximum number will be kept.
 python pyVcfFilter.py --vcf example/input.vcf --max-alleles 2 --out example/output.vcf
 ```
 
-### Biallelic / multiallelic site
+### 1.7.2 Biallelic / multiallelic site
 
 A biallelic site is a specific locus in a genome that contains two observed alleles, counting the reference as one, and therefore allowing for one variant allele.
 
@@ -292,7 +291,7 @@ A multiallelic site is a specific locus in a genome that contains three or more 
 python pyVcfFilter.py --vcf example/input.vcf --min-alleles 3 --out example/output.vcf
 ```
 
-## Individual Filtering
+## 1.8 Individual Filtering
 
 Include or exclude certain individuals.
 
@@ -304,9 +303,9 @@ python pyVcfFilter.py --vcf example/input.vcf --keep-inds --ind 'ind1' --ind 'in
 python pyVcfFilter.py --vcf example/input.vcf --remove-inds --ind 'ind1' --ind 'ind2' --out example/output.vcf
 ```
 
-## Genotype Filtering
+## 1.9 Genotype Filtering
 
-### Missing rate and missing count filtering (`--missing-rate` and `--missing-count`)
+### 1.9.1 Missing rate and missing count filtering (`--missing-rate` and `--missing-count`)
 
 Exclude sites with proportion of missing data is larger than the cutoff, which is between 0 and 1, where 0 indicates no missing data allowed and 1 allows sites that are completely missing.  
 
@@ -320,7 +319,7 @@ Exclude sites that the number of individuals who missing this site is larger tha
 python pyVcfFilter.py --vcf example/input.vcf --missing-count 10 --out example/output.vcf
 ```
 
-### Homozygous and heterozygous filtering (`--genotype`)
+### 1.9.2 Homozygous and heterozygous filtering (`--genotype`)
 
 Values for **--genotype**:
 
@@ -340,19 +339,19 @@ The allele values are 0 for the reference allele, 1 for the first allele listed 
 
 **Note**: individual IDs must be in the header line of the input VCF file.
 
-#### Keep homozygous of reference alleles in sample 'ind1' and sample 'ind2'
+#### 1.9.2.1 Keep homozygous of reference alleles in sample 'ind1' and sample 'ind2'
 
 ```
 python pyVcfFilter.py --vcf example/input.vcf --genotype hom-ref --ind ind1 --ind ind2 --missing-value keep --out example/output.vcf
 ```
 
-#### Keep heterozygous variants in sample 'ind1' and sample 'ind2'
+#### 1.9.2.2 Keep heterozygous variants in sample 'ind1' and sample 'ind2'
 
 ```
 python pyVcfFilter.py --vcf example/input.vcf --genotype het --ind ind1 --ind ind2 --missing-value rm --out example/output.vcf
 ```
 
-### Compound heterozygous filtering
+### 1.9.3 Compound heterozygous filtering
 
 Find all heterozygous variant pairs in a gene. We need perform the gene-based annotation first, suppose we have performed the [ANNOVAR](http://annovar.openbioinformatics.org/en/latest/user-guide/gene) `refGene` based annotation. The key in the INFO field for gene name is `Gene_refGene`. The key in the INFO field for function is `Func_refGene` and values for function are: `exonic`, `splicing`, `ncRNA_exonic`, `ncRNA_intronic`, `UTR5`, `UTR3`, `intronic`, `upstream`, `downstream`, `intergenic`.
 
@@ -369,9 +368,9 @@ python pyVcfFilter.py --vcf example/input.vcf --comp-het --gene-key 'Gene_refGen
 - precedence of function values listed above are in decreased orders       
 - generally, you do not add 'intergenic' to `--func-values`      
 
-### Compare genotype of multiple individuals
+### 1.9.4 Compare genotype of multiple individuals
 
-#### Only variants have the same genotype across specified individuals will be kept
+#### 1.9.4.1 Only variants have the same genotype across specified individuals will be kept
 
 e.g., Only variants have the same genotype in individual `ind1` and `ind2` is kept.
 
@@ -379,7 +378,7 @@ e.g., Only variants have the same genotype in individual `ind1` and `ind2` is ke
 python pyVcfFilter.py --vcf example/input.vcf --cmp-gtp-same --ind ind1 --ind ind2 --missing-value keep --out example/output.vcf
 ```
 
-#### Only variants have different genotype between the first individual and others will be kept
+#### 1.9.4.2 Only variants have different genotype between the first individual and others will be kept
 
 e.g., Only variants have the different genotype between individual `ind1` and `ind2` will be kept.
 
