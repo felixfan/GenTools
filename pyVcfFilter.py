@@ -25,7 +25,7 @@ def split_str_dash(CHR):
     '''
     chrs = []
     if -1 != CHR.find('-'):
-        if -1 == CHR.find('chr') and -1 == CHR.find('CHR'):
+        if len(CHR)<3:
             tmp = CHR.split('-')
             start = int(tmp[0])
             end = int(tmp[1])+1
@@ -528,7 +528,7 @@ def filter_by_info(infile, outfile,key,operation,values,na,stype='float'):
                                     if float(b) == values:
                                         fla = False
                                         break
-                        elif operation == "=":
+                        elif operation == "==":
                             for b in bs:
                                 if 'str' == stype:
                                     if not b in values:
@@ -637,12 +637,6 @@ def filter_by_format(infile, outfile, key, operation, values, stype='float'):
     fw.close()
     fr.close()
 
-def check_float(s):
-    try:
-        return float(s)
-    except ValueError:
-        return False
-
 def extract_genotype(infile, pp, outfile):
     '''
     extract genotype by chr:pos
@@ -697,36 +691,37 @@ def filter_comp_het(infile, inds, geneKey, funcKey, funcValues, outfile):
             arr = r.split()
             n += 1
             ar = arr[7].split(';')
-            flag1 = False # whether func key is in info and value is in funcValues
+            flag0 = False # whether value is in funcValues
+            flag1 = False # whether func key is in info and 
             flag2 = False # whether gene key is in info
             for kv in ar: # check keys in info and value in funcValues
                 if kv.startswith(funcKey):
-                    a = kv.split('=')
-                    if not a[1] in funcValues:
-                        break
                     flag1 = True
+                    a = kv.split('=')
+                    if a[1] in funcValues:
+                        flag0 = True
                 if kv.startswith(geneKey):
                     gene = kv.split('=')[1]
                     flag2 = True
-                if flag1 and flag2:
+                if flag0 and flag1 and flag2:
                     break
-            if flag1 and flag2: # yes
+            if flag0 and flag1 and flag2: # in the specified region of a gene
                 if not gene in genes:
                     genes[gene] = []
-                one = [arr[0], arr[1]] # non-comp group
-                flag3 = True
-                for gidx in xrange(9,len(arr)):
+                one = [arr[0], arr[1]] # chr & pos, record het status of other inds
+                flag3 = True           # whether a var is het in all comp-het inds 
+                for gidx in xrange(9,len(arr)): # check ind gtp
                     if arr[gidx] != '.': # non-missing
                         gtp = arr[gidx][:3]
                         c = gtp.count('0')
                         if c == 1: # het
-                            if not gidx in indidx: # non-comp group
+                            if not gidx in indidx: # non-comp-het inds
                                 one.append(1)
-                        else: # non - het
-                            if gidx in indidx: # comp group
+                        else:      # non - het
+                            if gidx in indidx: # comp-het inds
                                 flag3 = False
                                 break
-                            else: # non-comp group
+                            else: # non-comp-het inds
                                 one.append(0)
                     else: # missing vale
                         flag3 = False
@@ -738,19 +733,17 @@ def filter_comp_het(infile, inds, geneKey, funcKey, funcValues, outfile):
                     sys.exit('Error: can not find "{}" in INFO field of the input vcf'.format(funcKey))
                 elif not flag2:
                      sys.exit('Error: can not find "{}" in INFO field of the input vcf'.format(geneKey))
-                else:
-                    sys.exit('Error: can not find "{}" and "{}" in INFO field of the input vcf'.format(geneKey, funcKey))
     fr.close()
-    # check comp
+    # check comp-het
     chg = [] # total genes have comp het
-    chv = 0 # total comp het
+    chv = 0 # total number of comp het var pairs
     for k, v in genes.items():
         if len(v) > 1:
-            flag5 = False
+            flag5 = False # whether this gene has any comp-het pairs
             for i in xrange(len(v)):
                 for j in xrange(len(v)):
                     if j > i:
-                        flag4 = True
+                        flag4 = True # whether all non-comp-het only have zero or one het in one pair vars
                         for z in xrange(2, len(v[i])):
                             if v[i][z] + v[j][z] > 1:
                                 flag4 = False
@@ -766,7 +759,7 @@ def filter_comp_het(infile, inds, geneKey, funcKey, funcValues, outfile):
                             flag5 = True
             if flag5:
                 chg.append(k)
-    pp = list(set(pp))
+    pp = list(set(pp)) # all uniq var (chr:pos) in comp-het pairs
     fp.close()
     print "there are total {} variants in {}".format(n, infile)
     print "\nnumber of genes: {}".format(len(chg))
@@ -776,6 +769,7 @@ def filter_comp_het(infile, inds, geneKey, funcKey, funcValues, outfile):
     print "write compound heterozygous to {}.compHetPairs.txt".format(outfile)
     print "write variants to {}".format(outfile)
     filter_by_phypos(infile, pp, outfile)
+    print "write genotypes of these variants to {}.gtp.txt".format(outfile)
     extract_genotype(infile, pp, outfile+'.gtp.txt')
 
 def filter_by_indid(infile, indids,outfile, exclude=False):
@@ -828,7 +822,8 @@ def filter_by_indid(infile, indids,outfile, exclude=False):
             fw.write('\n')
     print "{} variants of {} individuals were written to {}".format(n, m, outfile)
     fw.close()
-    fr.close()       
+    fr.close() 
+
 def filter_missing(infile, cutoff, outfile, count=False):
     '''
     filter by missing rate / count
@@ -861,56 +856,26 @@ def filter_missing(infile, cutoff, outfile, count=False):
     fw.close()
     fr.close()
 
-def check_info_format_command(FORMAT):
+def check_float(s):
+    try:
+        return float(s)
+    except ValueError:
+        return False
+
+def check_info_format_command(operator, value):
     '''
     help function
     '''
+    values = []
     stype = 'float'
-    if -1 != FORMAT.find('>='):
-        tmp = FORMAT.split('>=')
-        key = tmp[0]
-        operation = '>='
-        values = [float(tmp[1])]
-    elif -1 != FORMAT.find('<='):
-        tmp = FORMAT.split('<=')
-        key = tmp[0]
-        operation = '<='
-        values = [float(tmp[1])]
-    elif -1 != FORMAT.find('<'):
-        tmp = FORMAT.split('<')
-        key = tmp[0]
-        operation = '<'
-        values = [float(tmp[1])]
-    elif -1 != FORMAT.find('>'):
-        tmp = FORMAT.split('>')
-        key = tmp[0]
-        operation = '>'
-        values = [float(tmp[1])]
-    elif -1 != FORMAT.find('!='):
-        tmp = FORMAT.split('!=')
-        key = tmp[0]
-        operation = '!='
-        value = check_float(tmp[1])
-        values = None
-        if value:
-            stype = 'float'
-            values = [value]
-        else:
-            stype = 'str'
-            values = tmp[1].split(',')
-    elif -1 != FORMAT.find('='):
-        tmp = FORMAT.split('=')
-        key = tmp[0]
-        operation = '='
-        value = check_float(tmp[1])
-        values = None
-        if value:
-            stype = 'float'
-            values = [value]
-        else:
-            stype = 'str'
-            values = tmp[1].split(',')
-    return (key, operation, values, stype)
+    if operator == '>=' or operator == '>':
+        values = [max(map(float, value))]
+    elif operator == '<=' or operator == '<':
+        values = [min(map(float, value))]
+    elif operator == '!=' or operator == '==':
+        stype = 'str'
+        values = value
+    return (values, stype)
 
 def run_time(starttime):
     usedtime = time.time() - starttime
@@ -940,38 +905,41 @@ if __name__ == '__main__':
                         and thresholds of quality score, read depth and others.'''
 
     parser = argparse.ArgumentParser(description=desc)
-    parser.add_argument('-v', action='version', version='%(prog)s 1.5.0')
+    parser.add_argument('-v', action='version', version='%(prog)s 1.6.0')
     ### input
     parser.add_argument('--vcf', help='input vcf file', required=True, type=str)
     ### filters
-    parser.add_argument('--chr', help='filter by chromosome', type=str)
-    parser.add_argument('--region', help='filter by region', type=str)
+    parser.add_argument('--chr', help='filter by chromosome', type=str, action='append') # multiple
+    parser.add_argument('--region', help='filter by region', type=str, nargs=3) # 3 arguments
     parser.add_argument('--region-file', help='filter by region', type=str)
     parser.add_argument('--qual', help='filter by qual score', type=float)
-    parser.add_argument('--filter', help='filter by filter flag', type=str)
+    parser.add_argument('--filter', help='filter by filter flag', type=str, action='append')
     parser.add_argument('--genotype', help='filter by genotype', type=str,choices=["hom-ref", "hom-alt","het", "het-alt","not-hom-ref","not-two-alt","two-alt","not-het","not-hom-alt"])
     parser.add_argument('--keep-only-indels', help='keep only indels', action='store_true')
     parser.add_argument('--remove-indels', help='remove indels', action='store_true')
-    parser.add_argument('--ids', help='filter by ID', type=str)
-    parser.add_argument('--ids-file', help='filter by ID', type=str)
-    parser.add_argument('--phy-pos', help='filter by physical position', type=str)
+    parser.add_argument('--id', help='filter by ID', type=str, action='append')
+    parser.add_argument('--id-file', help='filter by ID', type=str)
+    parser.add_argument('--phy-pos', help='filter by physical position', type=str, nargs=2)
     parser.add_argument('--phy-pos-file', help='filter by physical position', type=str)
     parser.add_argument('--cmp-gtp-same', help='compare genotype of multiple individuals', action='store_true')
     parser.add_argument('--cmp-gtp-diff', help='compare genotype of multiple individuals', action='store_true')
     parser.add_argument('--min-alleles', help='minimum number of alleles', type=int)
     parser.add_argument('--max-alleles', help='maximum number of alleles', type=int)
-    parser.add_argument('--info', help='filter by info keys', type=str)
+    parser.add_argument('--info', help='filter by info keys', action='store_true')
+    parser.add_argument('--key', help='key in info field', type=str)
+    parser.add_argument('--value', help='value of key', type=str, action='append')
+    parser.add_argument('--operator', help='operator', type=str, choices=['>', '>=', '<', '<=', '==', '!='])
     parser.add_argument('--comp-het', help='filter by compound heterozygous', action='store_true')
     parser.add_argument('--gene-key', help='key for gene annotation in INFO field', type = str)
     parser.add_argument('--func-key', help='key for function annotation in INFO field', type = str)
-    parser.add_argument('--func-values', help='value for function annotation in INFO field', type = str)
+    parser.add_argument('--func-values', help='value for function annotation in INFO field', type = str, action='append')
     parser.add_argument('--keep-inds', help='filter by individual id', action='store_true')
     parser.add_argument('--remove-inds', help='filter by individual id', action='store_true')
     parser.add_argument('--missing-rate', help='filter by missing rate', type=str)
     parser.add_argument('--missing-count', help='filter by missing count', type=str)
     parser.add_argument('--format', help='filter by format keys', type=str)
     ### individual
-    parser.add_argument('--ind', help='individual id', type=str)
+    parser.add_argument('--ind', help='individual id', type=str, action='append')
     ### missing value
     parser.add_argument('--missing-value', help='how to deal with missing values', default="keep", type=str, choices=["keep", "rm"])
     ### reverse command
@@ -993,15 +961,18 @@ if __name__ == '__main__':
     IND = args['ind'] if 'ind' in args else None
     INDEL = args['keep_only_indels'] if 'keep_only_indels' in args else False
     SNP = args['remove_indels'] if 'remove_indels' in args else False
-    IDS = args['ids'] if 'ids' in args else None
-    IDSFILE = args['ids_file'] if 'ids_file' in args else None
+    ID = args['id'] if 'id' in args else None
+    IDFILE = args['id_file'] if 'id_file' in args else None
     PHYPOS = args['phy_pos'] if 'phy_pos' in args else None
     PHYPOSFILE = args['phy_pos_file'] if 'phy_pos_file' in args else None
     CMPGTPSAME = args['cmp_gtp_same'] if 'cmp_gtp_same' in args else None
     CMPGTPDIFF = args['cmp_gtp_diff'] if 'cmp_gtp_diff' in args else None
     MINALLELES = args['min_alleles'] if 'min_alleles' in args else None
     MAXALLELES = args['max_alleles'] if 'max_alleles' in args else None
-    INFO = args['info'] if 'info' in args else None
+    INFO = args['info'] if 'info' in args else False
+    KEY = args['key'] if 'key' in args else None
+    VALUE = args['value'] if 'value' in args else None
+    OPERATOR = args['operator'] if 'operator' in args else None
     COMPHET = args['comp_het'] if 'comp_het' in args else None
     GENEKEY = args['gene_key'] if 'gene_key' in args else None
     FUNCKEY = args['func_key'] if 'func_key' in args else None
@@ -1013,7 +984,7 @@ if __name__ == '__main__':
     FORMAT = args['format'] if 'format' in args else None
     ###log
     print "@-------------------------------------------------------------@"
-    print "|        vcfFilter      |      v1.5.0       |   13 Jun 2016   |"
+    print "|        pyVcfFilter     |      v1.6.0      |   26 Jul 2016   |"
     print "|-------------------------------------------------------------|"
     print "|  (C) 2016 Felix Yanhui Fan, GNU General Public License, v2  |"
     print "|-------------------------------------------------------------|"
@@ -1049,12 +1020,12 @@ if __name__ == '__main__':
         print "\t--keep-only-indels"
     elif SNP:
         print "\t--remove-indels" 
-    elif IDS:
-        print "\t--ids", IDS
+    elif ID:
+        print "\t--ids", ID
         if REVERSE:
             print "\t--reverse"
-    elif IDSFILE:
-        print "\t--ids-file", IDSFILE
+    elif IDFILE:
+        print "\t--ids-file", IDFILE
         if REVERSE:
             print "\t--reverse"
     elif PHYPOS:
@@ -1088,7 +1059,13 @@ if __name__ == '__main__':
     elif MAXALLELES:
         print "\t--max-alleles", MAXALLELES
     elif INFO:
-        print "\t--info", INFO
+        print "\t--info"
+        if KEY and VALUE and OPERATOR:
+            print "\t--key", KEY
+            print "\t--operaror", OPERATOR
+            print "\t--value", VALUE
+        else:
+            sys.exit('all of --key, --operator and --value are needed!')
         print "\t--missing-value", NA
     elif COMPHET:
         print "\t--comp-het"
@@ -1130,7 +1107,13 @@ if __name__ == '__main__':
     print
     ### run
     if CHR:
-        chrs = split_str_comma_dash(CHR)
+        chrs = []
+        for c in CHR:
+            if -1 == c.find('-'):
+                chrs.append(c)
+            else:
+                cs = split_str_comma_dash(c)
+                chrs.extend(cs)
         if REVERSE:
             print "exclude variants on chromosomes:", chrs
             filter_by_chr(INFILE,chrs, OUTFILE, True)
@@ -1138,10 +1121,9 @@ if __name__ == '__main__':
             print "keep variants on chromosomes:", chrs
             filter_by_chr(INFILE,chrs, OUTFILE)
     elif REGION:
-        tmp = REGION.split(':')
-        chrom = tmp[0]
-        start = int(tmp[1].split('-')[0])
-        end = int(tmp[1].split('-')[1])
+        chrom = REGION[0]
+        start = int(REGION[1])
+        end = int(REGION[2])
         regions = [[chrom,start,end]]
         if not REVERSE:
             print "keep variants in region: from {} to {} on chromosome {}".format(start, end, chrom)
@@ -1155,7 +1137,7 @@ if __name__ == '__main__':
         for r in tf:
             r = r.strip()
             arr = r.split()
-            regions.append([arr[0], int(arr[1]), int(arr[1])])
+            regions.append([arr[0], int(arr[1]), int(arr[2])])
         tf.close()
         if not REVERSE:
             print "keep variants in regions: {}".format(regions)
@@ -1168,12 +1150,10 @@ if __name__ == '__main__':
         print "keep variants with qual score no less than %f" % cutoff
         filter_by_qual(INFILE, cutoff, OUTFILE)
     elif FILTER:
-        flts = split_str_comma(FILTER)
-        print "keep variants with FILTER flag:", flts
-        filter_by_filter(INFILE, flts, OUTFILE)
+        print "keep variants with FILTER flag:", FILTER
+        filter_by_filter(INFILE, FILTER, OUTFILE)
     elif GENOTYPE:
         print "genotype filter:"
-        inds = split_str_comma(IND)
         if GENOTYPE == "hom-ref":
             print "keep variants that are homozygous of reference allele in these individuals:"
         elif GENOTYPE == "het":
@@ -1192,8 +1172,8 @@ if __name__ == '__main__':
             print "keep variants do not have two same alternative alleles in these individuals:"
         elif GENOTYPE == "not-het":
             print "keep variants are not heterozygous in these individuals:"
-        print inds
-        filter_by_genotype(INFILE, GENOTYPE, inds, NA, OUTFILE)
+        print IND
+        filter_by_genotype(INFILE, GENOTYPE, IND, NA, OUTFILE)
     elif INDEL:
         print "keep only indels"
         INDEL = not INDEL
@@ -1201,12 +1181,12 @@ if __name__ == '__main__':
     elif SNP:
         print "remove indels"
         filter_indels(INFILE, SNP, OUTFILE)
-    elif IDS or IDSFILE:
+    elif ID or IDFILE:
         ids = []
-        if IDS:
-            ids = IDS.split(',')
+        if ID:
+            ids = ID
         else:
-            tf = open(IDSFILE)
+            tf = open(IDFILE)
             for r in tf:
                 r = r.strip()
                 ids.append(r)
@@ -1227,7 +1207,7 @@ if __name__ == '__main__':
                 pp.append(arr[0]+":"+arr[1])
             tf.close()
         else:
-            pp = PHYPOS.split(',')
+            pp = [PHYPOS[0] + ":" + PHYPOS[1]]
         if not REVERSE:
             print "keep variants by physical position"
             filter_by_phypos(INFILE, pp, OUTFILE)
@@ -1237,21 +1217,19 @@ if __name__ == '__main__':
     elif CMPGTPSAME:
         print "compare genotype of multiple individuals"
         print "only variants have the same genotype across the following individuals will be kept"
-        inds = split_str_comma(IND)
-        if len(inds) > 1:
-            print "individuals:", inds
+        if len(IND) > 1:
+            print "individuals:", IND
         else:
             sys.exit('at least two individuals should be provided')
-        cmp_gtp(INFILE, inds, NA, OUTFILE,True)
+        cmp_gtp(INFILE, IND, NA, OUTFILE,True)
     elif CMPGTPDIFF:
         print "compare genotype of multiple individuals"
-        inds = split_str_comma(IND)
         print "only variants have the different genotype between the first individual and others will be kept"
-        if len(inds) > 1:
-            print "individuals:", inds[0], 'vs.', inds[1:]
+        if len(IND) > 1:
+            print "individuals:", IND[0], 'vs.', IND[1:]
         else:
             sys.exit('at least two individuals should be provided')
-        cmp_gtp(INFILE, inds, NA, OUTFILE,False)
+        cmp_gtp(INFILE, IND, NA, OUTFILE,False)
     elif MINALLELES and MAXALLELES:
         if MINALLELES < 2:
             sys.exit('value for --min-alleles should > 1')
@@ -1273,21 +1251,17 @@ if __name__ == '__main__':
         filter_num_alleles(INFILE, MINALLELES, MAXALLELES, OUTFILE)
     elif INFO:
         print "filter sites by INFO keys"
-        key, operation, values, stype = check_info_format_command(INFO)
-        print "keep sites with {} {} {}".format(key, operation, values)
-        filter_by_info(INFILE, OUTFILE,key,operation,values,NA,stype)
+        values, stype = check_info_format_command(OPERATOR, VALUE)
+        print "keep sites with {} {} {}".format(KEY, OPERATOR, values)
+        filter_by_info(INFILE, OUTFILE,KEY,OPERATOR,values,NA,stype)
     elif COMPHET:
-        inds = split_str_comma(IND)
-        funcValues = split_str_comma(FUNCVALUES)
         print "filter by compound hetrozygous"
-        print "find compound hetrozygous in these individuals: {}".format(inds)
-        filter_comp_het(INFILE, inds, GENEKEY, FUNCKEY, funcValues, OUTFILE)
+        print "find compound hetrozygous in these individuals: {}".format(IND)
+        filter_comp_het(INFILE, IND, GENEKEY, FUNCKEY, FUNCVALUES, OUTFILE)
     elif KEEPINDS:
-        inds = split_str_comma(IND)
-        filter_by_indid(INFILE, inds,OUTFILE)
+        filter_by_indid(INFILE, IND,OUTFILE)
     elif REMOVEINDS:
-        inds = split_str_comma(IND)
-        filter_by_indid(INFILE, inds,OUTFILE, True)
+        filter_by_indid(INFILE, IND,OUTFILE, True)
     elif MISSRATE:
         MISSRATE = float(MISSRATE)
         if 1 >= MISSRATE >= 0:
