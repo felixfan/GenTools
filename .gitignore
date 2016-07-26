@@ -1,7 +1,7 @@
 /nbproject/private
 /nbproject
 *.Rmd
-*.html
+README.html
 .Rhistory
 *.vcf
 *.txt
