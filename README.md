@@ -5,6 +5,7 @@
 Python tools for handling VCF files.
 
 * pyVcfFilter.py: Filtering of variants according to genotypes and thresholds for the 8 fixed fields in VCF file.
+* pyVcfManipulator: Basic statistics and manipulation of VCF file.  
 					
 # 2. Requirement and Installation
 
@@ -15,3 +16,9 @@ Python tools for handling VCF files.
 Filtering of variants according to genotypes and thresholds for the 8 fixed fields in VCF file.
 
 [pyVcfFilter manual](https://github.com/felixfan/PyTV/wiki/pyVcfFilter-manual)
+
+# 4. pyVcfManipulator
+
+Basic statistics and manipulation of VCF file.   
+
+[pyVcfManipulator](https://github.com/felixfan/PyTV/wiki/pyVcfManipulator-manual)
