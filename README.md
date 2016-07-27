@@ -21,4 +21,4 @@ Filtering of variants according to genotypes and thresholds for the 8 fixed fiel
 
 Basic statistics and manipulation of VCF file.   
 
-[pyVcfManipulator](https://github.com/felixfan/PyTV/wiki/pyVcfManipulator-manual)
+[pyVcfManipulator manual](https://github.com/felixfan/PyTV/wiki/pyVcfManipulator-manual)
