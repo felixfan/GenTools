@@ -1,0 +1,94 @@
+---
+title: "pyVcfManipulator - Python tool for basic statistics and manipulation of VCF file"
+output: 
+  html_document:
+    keep_md: true
+    toc: true
+    toc_depth: 6
+    toc_float: true
+---
+
+# 1. pyVcfManipulator
+
+Basic statistics and manipulation of VCF file.
+
+## 1.1 Heterozygosity (`--het`)
+
+calculates heterozygosity on a per-individual basis, only use biallelic variants.  
+
+```
+python pyVcfManipulator.py --vcf example/input.vcf --het --out example/het.txt
+```
+
+## 1.2 Concatenates VCF (`--concat`)
+
+Concatenates VCF files, input file should have same columns. This option only check the `chromsome` and `pos` columns to merge two VCF files. The two VCF files should contain same individuals and in the same order. It can be used to concatenate two output VCFs of **pyVcfFilter** with different filters on the same VCF.
+
+```
+python pyVcfManipulator.py --vcf example/input.vcf --vcf2 example/input2.vcf --concat --out example/output.vcf
+```
+
+## 1.3 Chromosome statistics (`--stat-chr`)
+
+Calculates how many variants on each chromosome.
+
+```
+python pyVcfManipulator.py --vcf example/input.vcf --stat-chr --out example/output.txt
+```
+
+## 1.4 Filter status (`--stat-filter`)
+
+Calculates how many variants in each filter status.
+
+```
+python pyVcfManipulator.py --vcf example/input.vcf --stat-filter --out example/output.txt
+```
+
+## 1.5 Statistics of the INFO field (`--stat-info`)
+
+The follwing examples are based on Annotated VCF.  
+
+### 1.5.1 How many variants in each gene
+
+```
+python pyVcfManipulator.py --vcf example/input.vcf --stat-info --key Gene_refGene --out example/output.txt
+```
+
+### 1.5.2 How many variants in each gene function category
+
+```
+python pyVcfManipulator.py --vcf example/input.vcf --stat-info --key Func_refGene --out example/output.txt
+```
+
+### 1.5.3 How many variants in each SIFT prediction category
+
+```
+python pyVcfManipulator.py --vcf example/input.vcf --stat-info --key SIFT_pred --out example/output.txt
+```
+
+### 1.5.4 How many variants in each Polyphen2 HDIV prediction category
+
+```
+python pyVcfManipulator.py --vcf example/input.vcf --stat-info --key Polyphen2_HDIV_pred --out example/output.txt
+```
+
+### 1.5.5 How many variants in each Polyphen2 HVAR prediction category
+
+```
+python pyVcfManipulator.py --vcf example/input.vcf --stat-info --key Polyphen2_HVAR_pred --out example/output.txt
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
