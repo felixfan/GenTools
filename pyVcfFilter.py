@@ -856,6 +856,42 @@ def filter_missing(infile, cutoff, outfile, count=False):
     fw.close()
     fr.close()
 
+def filter_parental_het(infile, inds, outfile):
+    fr = open(infile)
+    fw = open(outfile, 'w')
+    n = 0
+    m = 0
+    idx = []
+    myind = None
+    for r in fr:
+        r = r.strip()
+        if r.startswith("##"):
+            fw.write("%s\n" % r)
+        elif r.startswith("#"):
+            fw.write("%s\n" % r)
+            myind = r.split()
+            for x in inds:
+                if x in myind:
+                    tmp = myind.index(x)
+                    idx.append(tmp)
+                else:
+                    sys.exit('Error: %s is not in %s' % (x, infile))
+        else:
+            arr = r.split()
+            n += 1
+            flag = False # no het
+            for i in range(9,len(arr)):
+                if myind[i] in inds:
+                    flag = (flag or check_allele(arr[i],'het','rm'))
+                if flag == True:
+                    break
+            if flag:
+                fw.write("%s\n" % r)
+                m += 1
+    print "%d of %d variants were written to %s" % (m, n, outfile)
+    fw.close()
+    fr.close()
+
 def check_float(s):
     try:
         return float(s)
@@ -905,7 +941,7 @@ if __name__ == '__main__':
                         and thresholds of quality score, read depth and others.'''
 
     parser = argparse.ArgumentParser(description=desc)
-    parser.add_argument('-v', action='version', version='%(prog)s 1.6.0')
+    parser.add_argument('-v', action='version', version='%(prog)s 1.7.0')
     ### input
     parser.add_argument('--vcf', help='input vcf file', required=True, type=str)
     ### filters
@@ -938,6 +974,7 @@ if __name__ == '__main__':
     parser.add_argument('--missing-rate', help='filter by missing rate', type=str)
     parser.add_argument('--missing-count', help='filter by missing count', type=str)
     parser.add_argument('--format', help='filter by format keys', type=str)
+    parser.add_argument('--parental-het', help='at least one parent is heterozygous', action='store_true')
     ### individual
     parser.add_argument('--ind', help='individual id', type=str, action='append')
     ### missing value
@@ -982,9 +1019,10 @@ if __name__ == '__main__':
     MISSRATE= args['missing_rate'] if 'missing_rate' in args else None
     MISSCOUNT = args['missing_count'] if 'missing_count' in args else None
     FORMAT = args['format'] if 'format' in args else None
+    PARENTALHET = args['parental_het'] if 'parental_het' in args else None
     ###log
     print "@-------------------------------------------------------------@"
-    print "|        pyVcfFilter     |      v1.6.0      |   26 Jul 2016   |"
+    print "|        pyVcfFilter     |      v1.7.0      |   04 Aug 2016   |"
     print "|-------------------------------------------------------------|"
     print "|  (C) 2016 Felix Yanhui Fan, GNU General Public License, v2  |"
     print "|-------------------------------------------------------------|"
@@ -1103,6 +1141,12 @@ if __name__ == '__main__':
         print "\t--missing-count", MISSCOUNT
     elif FORMAT:
         print "\t--format", FORMAT
+    elif PARENTALHET:
+        print "\t--parental-het"
+        if IND:
+            print "\t--ind", IND
+        else:
+            sys.exit("Error, argment --ind is missing!")
     print "\t--out", OUTFILE
     print
     ### run
@@ -1281,6 +1325,11 @@ if __name__ == '__main__':
         key, operation, values, stype = check_info_format_command(FORMAT)
         print "keep sites with {} {} {}".format(key, operation, values)
         filter_by_format(INFILE, OUTFILE,key,operation,values,stype)
+    elif PARENTALHET:
+        print "at least one parent is heterozygous"
+        if len(IND) != 2:
+            sys.exit('two and only two individual IDs are needed')
+        filter_parental_het(INFILE, IND,OUTFILE)
     else:
         sys.exit('do nothing!')
     ###run time
