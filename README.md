@@ -1,23 +1,21 @@
-# PyTV - Python Tools for handling VCF files.
+# GenTools - Genetics and Genomics Analysis Tools
 
-# 1. Introduction
+## Requirement and Installation
 
-Python tools for handling VCF files.
+- Python 2 (Python 2.7 or higher) is available [here](https://www.python.org/).
+
+## Python Tools for handling VCF files.
 
 * pyVcfFilter.py: Filtering of variants according to genotypes and thresholds for the 8 fixed fields in VCF file.
 * pyVcfManipulator: Basic statistics and manipulation of VCF file.  
-					
-# 2. Requirement and Installation
 
-`PyTV` uses Python 2 (Python 2.7 or higher) which is available [here](https://www.python.org/).
-
-# 3. pyVcfFilter
+### pyVcfFilter
 
 Filtering of variants according to genotypes and thresholds for the 8 fixed fields in VCF file.
 
 [pyVcfFilter manual](https://github.com/felixfan/PyTV/wiki/pyVcfFilter-manual)
 
-# 4. pyVcfManipulator
+### pyVcfManipulator
 
 Basic statistics and manipulation of VCF file.   
 
