@@ -220,7 +220,7 @@ if __name__ == '__main__':
     print "|  (C) 2016 Felix Yanhui Fan, GNU General Public License, v3  |"
     print "|-------------------------------------------------------------|"
     print "|    For documentation, citation & bug-report instructions:   |"
-    print "|            http://felixfan.github.io/PyTV                   |"
+    print "|            http://felixfan.github.io/GenTools               |"
     print "@-------------------------------------------------------------@"
     print "\n\tOptions in effect:"
     print "\t--vcf", INFILE
