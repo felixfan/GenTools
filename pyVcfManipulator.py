@@ -7,7 +7,7 @@ import operator
 
 def cal_het(infile, outfile):
     '''
-    calculates heterozygosity on a per-individual basis, only use biallelic variants
+    calculates heterozygosity on a per-individual basis, only use biallelic variants on autosomes
     '''
     fr = open(infile)
     fw = open(outfile, 'w')
@@ -26,13 +26,14 @@ def cal_het(infile, outfile):
             hom = [0] * n
         else:
             arr = r.split()
-            if arr[4].find(',') == -1:
-                for i in xrange(n):
-                    gtp = arr[i+9][0:3]
-                    if gtp.count('0') == 1:
-                        het[i] += 1
-                    else:
-                        hom[i] += 1
+            if (len(arr[0]) > 2 and arr[0][3:].isdigit() and int(arr[0][3:]) < 23) or int(arr[0]) < 23:
+                if arr[4].find(',') == -1:
+                    for i in xrange(n):
+                        gtp = arr[i+9][0:3]
+                        if gtp.count('0') == 1:
+                            het[i] += 1
+                        else:
+                            hom[i] += 1
     fr.close()
     print('Outputting Individual Heterozygosity: Only using biallelic variants.\n')
     fw.write('{}\t{}\t{}\t{}\n'.format('indvID', 'numHet', 'numHom', 'HetRatio'))
@@ -41,7 +42,7 @@ def cal_het(infile, outfile):
         hetratio = 1.0 * het[i] / (het[i] + hom[i])
         fw.write('{}\t{}\t{}\t{:.4f}\n'.format(ind[i], het[i], hom[i], hetratio))
         print('{}\t{}\t{}\t{:.4f}'.format(ind[i], het[i], hom[i], hetratio))
-    fw.close()  
+    fw.close()
     print("\nWrite results to {}".format(outfile))
 
 def concat_vcf(infile1, infile2, outfile):
