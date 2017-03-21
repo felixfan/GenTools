@@ -12,7 +12,8 @@ def cal_het(infile, outfile):
     fr = open(infile)
     fw = open(outfile, 'w')
     het = []
-    hom = []
+    hom_alt = []
+    hom_ref = []
     ind = []
     n = 0
     for r in fr:
@@ -23,25 +24,32 @@ def cal_het(infile, outfile):
             ind = r.split()[9:]
             n = len(ind)
             het = [0] * n
-            hom = [0] * n
+            hom_alt = [0] * n
+            hom_ref = [0] * n
         else:
             arr = r.split()
-            if (len(arr[0]) > 2 and arr[0][3:].isdigit() and int(arr[0][3:]) < 23) or int(arr[0]) < 23:
+            if (len(arr[0]) > 2 and arr[0][3:].isdigit() and int(arr[0][3:]) < 23) or (arr[0].isdigit() and int(arr[0]) < 23):
                 if arr[4].find(',') == -1:
                     for i in xrange(n):
-                        gtp = arr[i+9][0:3]
-                        if gtp.count('0') == 1:
-                            het[i] += 1
-                        else:
-                            hom[i] += 1
+                        if arr[i+9] != ".":
+                            gtp = arr[i+9][0:3]
+                            if gtp.count('0') == 1:
+                                het[i] += 1
+                            elif gtp.count('0') == 0:
+                                hom_alt[i] += 1
+                            elif gtp.count('0') == 2:
+                                hom_ref[i] += 1
+                            else:
+                                sys.exit("wrong genotype format: {}\n".format(gtp))
+
     fr.close()
-    print('Outputting Individual Heterozygosity: Only using biallelic variants.\n')
-    fw.write('{}\t{}\t{}\t{}\n'.format('indvID', 'numHet', 'numHom', 'HetRatio'))
-    print('{}\t{}\t{}\t{}'.format('indvID', 'numHet', 'numHom', 'HetRatio'))
+    print('Outputting Individual Heterozygosity: Only using biallelic variants on autosomes.\n')
+    fw.write('{}\t{}\t{}\t{}\t{}\n'.format('indvID', 'numHet', 'numHomRef', 'numHomAlt', 'HetRatio'))
+    print('{}\t{}\t{}\t{}\t{}'.format('indvID', 'numHet', 'numHomRef', 'numHomAlt', 'HetRatio'))
     for i in xrange(n):
-        hetratio = 1.0 * het[i] / (het[i] + hom[i])
-        fw.write('{}\t{}\t{}\t{:.4f}\n'.format(ind[i], het[i], hom[i], hetratio))
-        print('{}\t{}\t{}\t{:.4f}'.format(ind[i], het[i], hom[i], hetratio))
+        hetratio = 1.0 * het[i] / hom_alt[i]
+        fw.write('{}\t{}\t{}\t{}\t{:.4f}\n'.format(ind[i], het[i], hom_ref[i], hom_alt[i], hetratio))
+        print('{}\t{}\t{}\t{}\t{:.4f}'.format(ind[i], het[i], hom_ref[i], hom_alt[i], hetratio))
     fw.close()
     print("\nWrite results to {}".format(outfile))
 
@@ -134,11 +142,65 @@ def stat_info(infile, outfile, key):
     fw.close()
     fr.close()
 
-def cal_tstv(infile, outfile):
+def cal_titv(infile, outfile):
     '''
-    calculates transition transversion ratio, only use biallelic SNPs
+    calculates transition transversion ratio, only use biallelic SNPs on autosomes
     '''
-    pass
+    fr = open(infile)
+    fw = open(outfile, 'w')
+    ac = []
+    ag = []
+    at = []
+    cg = []
+    ct = []
+    gt = []
+    ind = []
+    n = 0
+    for r in fr:
+        r = r.strip()
+        if r.startswith("##"):
+            pass
+        elif r.startswith("#"):
+            ind = r.split()[9:]
+            n = len(ind)
+            ac = [0] * n
+            ag = [0] * n
+            at = [0] * n
+            cg = [0] * n
+            ct = [0] * n
+            gt = [0] * n
+        else:
+            arr = r.split()
+            if (len(arr[0]) > 2 and arr[0][3:].isdigit() and int(arr[0][3:]) < 23) or (arr[0].isdigit() and int(arr[0]) < 23):
+                if len(arr[4])== 1:
+                    for i in xrange(n):
+                        if arr[i+9] != ".":
+                            gtp = arr[i+9][0:3]
+                            if gtp.count('0') == 1:
+                                if arr[3] + arr[4] == 'AC' or arr[3] + arr[4] == 'CA':
+                                    ac[i] += 1
+                                elif arr[3] + arr[4] == 'AG' or arr[3] + arr[4] == 'GA':
+                                    ag[i] += 1
+                                elif arr[3] + arr[4] == 'AT' or arr[3] + arr[4] == 'TA':
+                                    at[i] += 1
+                                elif arr[3] + arr[4] == 'CG' or arr[3] + arr[4] == 'GC':
+                                    cg[i] += 1
+                                elif arr[3] + arr[4] == 'CT' or arr[3] + arr[4] == 'TC':
+                                    ct[i] += 1
+                                elif arr[3] + arr[4] == 'GT' or arr[3] + arr[4] == 'TG':
+                                    gt[i] += 1
+    fr.close()
+    print('Outputting Individual transition transversion ratio: Only using biallelic SNPs on autosomes.\n')
+    fw.write('{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\n'.format('indvID', 'AC', 'AG', 'AT', 'CG', 'CT', 'GT', "Ti", "Tv", "TiTv"))
+    print('{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}'.format('indvID', 'AC', 'AG', 'AT', 'CG', 'CT', 'GT', "Ti", "Tv", "TiTv"))
+    for i in xrange(n):
+        ti = ag[i] + ct[i]
+        tv = ac[i] + at[i] + cg[i] + gt[i]
+        titv = 1.0 * ti / tv
+        fw.write('{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{:.4f}\n'.format(ind[i], ac[i], ag[i], at[i], cg[i], ct[i], gt[i], ti, tv, titv))
+        print('{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{:.4f}'.format(ind[i], ac[i], ag[i], at[i], cg[i], ct[i], gt[i], ti, tv, titv))
+    fw.close()
+    print("\nWrite results to {}".format(outfile))
 
 def convert_plink_tped(infile, outfile):
     '''
@@ -201,6 +263,7 @@ if __name__ == '__main__':
     parser.add_argument('--stat-filter', help='statistics based field in VCF files', action='store_true')
     parser.add_argument('--stat-info', help='statistics based on info field', action='store_true')
     parser.add_argument('--key', help='key words to be used', type=str)
+    parser.add_argument('--titv', help='calculates Ti/Tv ratio on a per-individual basis', action='store_true')
     ### output
     parser.add_argument('--out', help='output file', type=str, default='output.txt')
     ### parameter
@@ -214,6 +277,7 @@ if __name__ == '__main__':
     HET = args['het'] if 'het' in args else False
     STATCHR = args['stat_chr'] if 'stat_chr' in args else None
     STATFILTER = args['stat_filter'] if 'stat_filter' in args else None
+    TITV = args['titv'] if 'titv' in args else False
     ### log
     print "@-------------------------------------------------------------@"
     print "|     pyVcfManipulator    |      v0.3.0     |   27 Jul 2016   |"
@@ -221,7 +285,7 @@ if __name__ == '__main__':
     print "|  (C) 2016 Felix Yanhui Fan, GNU General Public License, v3  |"
     print "|-------------------------------------------------------------|"
     print "|    For documentation, citation & bug-report instructions:   |"
-    print "|            http://felixfan.github.io/GenTools               |"
+    print "|            http://felixfan.github.io/PyTV                   |"
     print "@-------------------------------------------------------------@"
     print "\n\tOptions in effect:"
     print "\t--vcf", INFILE
@@ -243,6 +307,8 @@ if __name__ == '__main__':
         print '\t--stat-chr'
     elif STATFILTER:
         print '\t--stat-filter'
+    elif TITV:
+        print '\t--titv'
     print "\t--out", OUTFILE
     print
     ### run
@@ -256,6 +322,8 @@ if __name__ == '__main__':
         stat_field(INFILE, OUTFILE, 0)
     elif STATFILTER:
         stat_field(INFILE, OUTFILE, 6)
+    elif TITV:
+        cal_titv(INFILE, OUTFILE)
     else:
         print "Do nothing"
     ###time
